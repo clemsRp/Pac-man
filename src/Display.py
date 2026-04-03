@@ -18,6 +18,7 @@ class Display:
         self.screen_height = 2000
         self.scale_x = self.screen_width // self.maze_width
         self.scale_y = self.screen_height // self.maze_height
+        self.entities: list[CollisionBox] = []
         self.collision_boxs = self.create_collision_boxs()
 
     def create_collision_boxs(self):
@@ -104,7 +105,45 @@ class Display:
         # pr.set_config_flags(pr.ConfigFlags.FLAG_WINDOW_RESIZABLE)
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
         pr.init_window(self.screen_width, self.screen_height, "Pac-Man")
-        pr.set_target_fps(120)
+        pr.set_target_fps(300)
+
+    def check_collision_x(self, box_y: int, new_x: int,
+                          future_box_x: CircleBox) -> bool:
+
+        collision_x = False
+        for entity in self.entities:
+            if entity.box.collides_with(future_box_x):
+                return True
+
+        for dy in [-1, 0, 1]:
+            ny = box_y + dy
+            if 0 <= ny < self.maze_height:
+                box_x = new_x // self.scale_x
+                for dx in [-1, 0, 1]:
+                    nx = box_x + dx
+                    if 0 <= nx < self.maze_width:
+                        for box in self.collision_boxs[ny][nx]:
+                            if future_box_x.collides_with(box):
+                                return True
+        return collision_x
+
+    def check_collision_y(self, box_x: int, new_y: int,
+                          future_box_y: CircleBox) -> bool:
+        collision_y = False
+        for entity in self.entities:
+            if entity.box.collides_with(future_box_y):
+                return True
+
+        for dy in [-1, 0, 1]:
+            ny = new_y // self.scale_y + dy
+            if 0 <= ny < self.maze_height:
+                for dx in [-1, 0, 1]:
+                    nx = box_x + dx
+                    if 0 <= nx < self.maze_width:
+                        for box in self.collision_boxs[ny][nx]:
+                            if future_box_y.collides_with(box):
+                                return True
+        return collision_y
 
     def player_collision_events(self, new_x, new_y):
         base_y = self.player.y
@@ -123,20 +162,7 @@ class Display:
         collision_x = False
         box_y = int(base_y // self.scale_y)
 
-        if self.player_test.box.collides_with(future_box_x):
-            collision_x = True
-
-        for dy in [-1, 0, 1]:
-            ny = box_y + dy
-            if 0 <= ny < self.maze_height:
-                box_x = new_x // self.scale_x
-                for dx in [-1, 0, 1]:
-                    nx = box_x + dx
-                    if 0 <= nx < self.maze_width:
-                        for box in self.collision_boxs[ny][nx]:
-                            if future_box_x.collides_with(box):
-                                collision_x = True
-                                break
+        collision_x = self.check_collision_x(box_y, new_x, future_box_x)
 
         if not collision_x:
             self.player.x = new_x
@@ -147,47 +173,41 @@ class Display:
             self.player.radius,
         )
 
-
         collision_y = False
         box_x = int(self.player.x // self.scale_x)
-        if self.player_test.box.collides_with(future_box_y):
-            collision_y = True
 
-
-        for dy in [-1, 0, 1]:
-            ny = new_y // self.scale_y + dy
-            if 0 <= ny < self.maze_height:
-                for dx in [-1, 0, 1]:
-                    nx = box_x + dx
-                    if 0 <= nx < self.maze_width:
-                        for box in self.collision_boxs[ny][nx]:
-                            if future_box_y.collides_with(box):
-                                collision_y = True
-                                break
-
+        collision_y = self.check_collision_y(box_x, new_y, future_box_y)
         if not collision_y:
             self.player.y = new_y
         self.player.update_collision_box()
 
     def handle_events(self):
-
         new_x = self.player.x
         new_y = self.player.y
-
+        SPEED = 2
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
-            new_x += 5
+            self.player.direction = (SPEED, 0)
         if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
-            new_x -= 5
+            self.player.direction = (-SPEED, 0)
+
         if pr.is_key_down(pr.KeyboardKey.KEY_UP):
-            new_y -= 5
+            self.player.direction = (0, -SPEED)
         if pr.is_key_down(pr.KeyboardKey.KEY_DOWN):
-            new_y += 5
+            self.player.direction = (0, SPEED)
+
+        new_x += self.player.direction[0]
+        new_y += self.player.direction[1]
 
         self.player_collision_events(new_x, new_y)
 
     def render_loop(self):
-        self.player_test = Player(538, 300, 20, 10)
-        self.player = Player(538, 400, 20, 10)
+        SIZE_PACMAN = min(self.scale_x, self.scale_y) // 2.5
+        self.entities = [Player(538, 300, 20, 10)]
+        
+        self.player = Player(self.scale_x // 2,
+                             self.scale_y // 2,
+                             SIZE_PACMAN,
+                             10)
         while not pr.window_should_close():
 
             pr.begin_drawing()
@@ -199,9 +219,9 @@ class Display:
                            self.player.y,
                            (self.player.radius),
                            pr.YELLOW)
-            pr.draw_circle(self.player_test.x,
-                           self.player_test.y,
-                           (self.player_test.radius),
+            pr.draw_circle(self.entities[0].x,
+                           self.entities[0].y,
+                           (self.entities[0].radius),
                            pr.RED)
             pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 
