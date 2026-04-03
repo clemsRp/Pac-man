@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 class CollisionBox(ABC):
     @abstractmethod
-    def __init__(self, x: int, y: int, width: int, height: int):
+    def __init__(self, x: float, y: float, width: float, height: float):
         ...
 
     @abstractmethod
@@ -17,7 +17,7 @@ class CollisionBox(ABC):
 
 
 class RectangleBox(CollisionBox):
-    def __init__(self, x: int, y: int, width: int, height: int):
+    def __init__(self, x: float, y: float, width: float, height: float):
         self.x = x
         self.y = y
         self.width = width
@@ -38,7 +38,7 @@ class RectangleBox(CollisionBox):
 
 
 class CircleBox(CollisionBox):
-    def __init__(self, center_x: int, center_y: int, radius: int):
+    def __init__(self, center_x: float, center_y: float, radius: float):
         self.center_x = center_x
         self.center_y = center_y
         self.radius = radius
