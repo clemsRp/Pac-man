@@ -33,6 +33,7 @@ class Display:
             pr.clear_background(pr.BLACK)
             pr.draw_rectangle(100, 100, 600, 50, pr.DARKBLUE)
             pr.draw_circle(400, 200, 5.0, pr.WHITE)
+
             self.handle_events()
         
             pr.draw_circle(int(self.pacman_x),

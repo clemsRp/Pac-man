@@ -1,4 +1,4 @@
-from Display import start_render_loop
+from src.Display import start_render_loop
 
 
 if __name__ == "__main__":
