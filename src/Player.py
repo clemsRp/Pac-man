@@ -1,4 +1,4 @@
-from .Physics import CollisionBox
+from .Physics import CircleBox
 
 
 class Player:
@@ -8,10 +8,9 @@ class Player:
         self.y = y
         self.radius = radius
         self.speed = speed
-        self.box = CollisionBox(x, y, 2 * radius, 2 * radius)
+        self.box: CircleBox = CircleBox(x, y, radius)
 
     def update_collision_box(self):
-        self.box.x = self.x
-        self.box.y = self.y
-        self.box.width = self.radius * 2
-        self.box.height = self.radius * 2
+        if isinstance(self.box, CircleBox):
+            self.box.center_x = self.x
+            self.box.center_y = self.y
