@@ -86,7 +86,7 @@ class Display:
                 cell_width = next_x - start_x
                 cell_height = next_y - start_y
 
-                if self.grid[y][x] == 15: # all walls
+                if self.grid[y][x] == 15:
                     pr.draw_rectangle(start_x,
                                       start_y,
                                       cell_width,
@@ -130,18 +130,18 @@ class Display:
         pr.set_target_fps(300)
 
     def create_future_box(self, new_x: float, new_y: float) -> CollisionBox:
-            if isinstance(self.player.box, CircleBox):
-                return CircleBox(new_x, new_y, float(self.player.radius))
-            elif isinstance(self.player.box, RectangleBox):
-                rect_x = new_x - (self.player.box.width / 2.0)
-                rect_y = new_y - (self.player.box.height / 2.0)
+        if isinstance(self.player.box, CircleBox):
+            return CircleBox(new_x, new_y, float(self.player.radius))
+        elif isinstance(self.player.box, RectangleBox):
+            rect_x = new_x - (self.player.box.width / 2.0)
+            rect_y = new_y - (self.player.box.height / 2.0)
 
-                return RectangleBox(rect_x,
-                                    rect_y,
-                                    float(self.player.box.width),
-                                    float(self.player.box.height))
-            else:
-                raise TypeError("Unknown Box Type")
+            return RectangleBox(rect_x,
+                                rect_y,
+                                float(self.player.box.width),
+                                float(self.player.box.height))
+        else:
+            raise TypeError("Unknown Box Type")
 
     def check_collision_x(self, box_y: int, new_x: float,
                           future_box_x: CollisionBox) -> bool:
@@ -199,7 +199,7 @@ class Display:
             self.player.x = new_x
 
         future_box_y = self.create_future_box(self.player.x, new_y)
-        
+
         box_x = int(self.player.x // self.scale_x)
         collision_y = self.check_collision_y(box_x, new_y, future_box_y)
 
