@@ -60,7 +60,7 @@ class Display:
                             (x + 1) * self.scale_x,
                             y * self.scale_y,
                             WALL_WIDTH,
-                            self.scale_y
+                            self.scale_y + WALL_WIDTH
                         )
                     )
 
@@ -70,9 +70,18 @@ class Display:
                             x * self.scale_x,
                             y * self.scale_y,
                             WALL_WIDTH,
-                            self.scale_y
+                            self.scale_y + WALL_WIDTH
                         )
                     )
+
+                boxes[y][x].append(
+                    RectangleBox(
+                        (x + 1) * self.scale_x,
+                        (y + 1) * self.scale_y,
+                        WALL_WIDTH,
+                        WALL_WIDTH
+                    )
+                )
 
         return boxes
 
@@ -110,14 +119,14 @@ class Display:
                     pr.draw_rectangle(next_x,
                                       start_y,
                                       int(WALL_WIDTH),
-                                      cell_height,
+                                      cell_height + WALL_WIDTH,
                                       WALL_COLOR)
 
                 if self.grid[y][x] & WEST:
                     pr.draw_rectangle(start_x,
                                       start_y,
                                       int(WALL_WIDTH),
-                                      cell_height,
+                                      cell_height + WALL_WIDTH,
                                       WALL_COLOR)
 
     def create_window(self):
@@ -182,7 +191,10 @@ class Display:
                                 return True
         return collision_y
 
-    def player_collision_events(self, new_x: float, new_y: float):
+    def player_collision_events(
+                self,
+                new_x: float, new_y: float
+            ):
         base_y = self.player.y
 
         maze_pixels_x = self.maze_width * self.scale_x
@@ -207,24 +219,66 @@ class Display:
             self.player.y = new_y
         self.player.update_collision_box()
 
+    def can_move_direction(self, add_x: int, add_y: int) -> bool:
+        base_y = self.player.y
+
+        new_x = self.player.x + add_x
+        new_y = self.player.y + add_y
+
+        maze_pixels_x = self.maze_width * self.scale_x
+        maze_pixels_y = self.maze_height * self.scale_y
+        new_x = max(0, min(new_x, maze_pixels_x - 1))
+        new_y = max(0, min(new_y, maze_pixels_y - 1))
+
+        future_box_x = self.create_future_box(new_x, base_y)
+
+        box_y = int(base_y // self.scale_y)
+        collision_x = self.check_collision_x(box_y, new_x, future_box_x)
+
+        future_box_y = self.create_future_box(self.player.x, new_y)
+
+        box_x = int(self.player.x // self.scale_x)
+        collision_y = self.check_collision_y(box_x, new_y, future_box_y)
+
+        return not collision_x and not collision_y
+
     def handle_events(self):
-        new_x = self.player.x
-        new_y = self.player.y
         SPEED = 2.0
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
-            self.player.direction = (SPEED, 0)
+            self.player.try_direction = (SPEED, 0)
+            if self.can_move_direction(SPEED, 0):
+                self.player.direction = (SPEED, 0)
+
         if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
-            self.player.direction = (-SPEED, 0)
+            self.player.try_direction = (-SPEED, 0)
+            if self.can_move_direction(-SPEED, 0):
+                self.player.direction = (-SPEED, 0)
 
         if pr.is_key_down(pr.KeyboardKey.KEY_UP):
-            self.player.direction = (0, -SPEED)
+            self.player.try_direction = (0, -SPEED)
+            if self.can_move_direction(0, -SPEED):
+                self.player.direction = (0, -SPEED)
+
         if pr.is_key_down(pr.KeyboardKey.KEY_DOWN):
-            self.player.direction = (0, SPEED)
+            self.player.try_direction = (0, SPEED)
+            if self.can_move_direction(0, SPEED):
+                self.player.direction = (0, SPEED)
 
-        new_x += self.player.direction[0]
-        new_y += self.player.direction[1]
+        add_x = self.player.direction[0]
+        add_y = self.player.direction[1]
 
-        self.player_collision_events(new_x, new_y)
+        if self.can_move_direction(
+            self.player.try_direction[0],
+            self.player.try_direction[1]
+        ):
+            self.player.direction = self.player.try_direction
+            add_x = self.player.try_direction[0]
+            add_y = self.player.try_direction[1]
+
+        self.player_collision_events(
+            self.player.x + add_x,
+            self.player.y + add_y
+        )
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -272,21 +326,22 @@ class Display:
                        int(self.player.y),
                        int(self.player.radius),
                        pr.YELLOW)
-        # pr.draw_rectangle(int(self.player.box.x),
-        #                   int(self.player.box.y),
-        #                   int(self.player.box.width),
-        #                   int(self.player.box.height),
-        #                   pr.BLUE)
+        """ pr.draw_rectangle(int(self.player.box.x),
+                          int(self.player.box.y),
+                          int(self.player.box.width),
+                          int(self.player.box.height),
+                          pr.WHITE) """
 
     def render_loop(self):
         SIZE_PACMAN = self.update_radius()
-        self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
-        hitbox_w = self.scale_x * 0.9
-        hitbox_h = self.scale_y * 0.9
-        self.player = Player(self.scale_x // 2,
-                             self.scale_y // 2,
+        # self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
+        self.entities = []
+        hitbox_w = self.scale_x - 2 * WALL_WIDTH
+        hitbox_h = self.scale_y - 2 * WALL_WIDTH
+        self.player = Player(self.scale_x // 2 + WALL_WIDTH - 2,
+                             self.scale_y // 2 + WALL_WIDTH,
                              SIZE_PACMAN,
-                             hitbox_w, hitbox_h)
+                             hitbox_w + 2, hitbox_h - 2, "rect")
         self.resize_event()
         while not pr.window_should_close():
             if pr.is_window_resized():
@@ -297,10 +352,10 @@ class Display:
             self.handle_events()
             # pr.draw_circle(400, 200, 5.0, pr.WHITE)
             self.draw_player()
-            pr.draw_circle(int(self.entities[0].x),
-                           int(self.entities[0].y),
-                           (self.entities[0].radius),
-                           pr.RED)
+            # pr.draw_circle(int(self.entities[0].x),
+            #                int(self.entities[0].y),
+            #                (self.entities[0].radius),
+            #                pr.RED)
 
             pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 

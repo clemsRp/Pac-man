@@ -19,6 +19,7 @@ class Player:
                                     box_width, box_height)
 
         self.direction: tuple[int, int] = (0, 0)
+        self.try_direction: tuple[int, int] = (0, 0)
 
     def update_collision_box(self):
         if isinstance(self.box, CircleBox):
