@@ -3,20 +3,22 @@ from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
-
+from .Interfaces import Interface
+from .Constants import (MAIN_MENU, GAME_LOGIC)
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
 SPEED = 2.0
 
 
-class Display:
-    def __init__(self, maze: MazeGenerator):
+class GameLogic(Interface):
+    def __init__(self, maze: MazeGenerator,
+                 screen_width: int, screen_height: int):
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
         self.maze_width: int = len(self.grid[0])
-        self.screen_width: int = 1500  # will be updated in resize_event
-        self.screen_height: int = 1500
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
         self.scale_x: float = self.screen_width / self.maze_width
         self.scale_y: float = self.screen_height / self.maze_height
         self.scale_x = min([self.scale_x, self.scale_y])
@@ -24,17 +26,28 @@ class Display:
         self.scale_y = self.scale_x
         self.entities: list[CollisionBox] = []
         self.collision_boxs: list[
-                                list[
-                                    list[
-                                     RectangleBox]
-                                     ]] = self.create_collision_boxs()
+            list[
+                list[
+                    RectangleBox]
+            ]] = self.create_collision_boxs()
 
-        self.assets = {}
+        self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
+        self.assets: dict = {}
+        SIZE_PACMAN = self.update_radius()
+        hitbox_w = self.scale_x - 2 * WALL_WIDTH
+        hitbox_h = self.scale_y - 2 * WALL_WIDTH
+        self.player = Player(int(self.scale_x / 2),
+                             int(self.scale_y / 2),
+                             SIZE_PACMAN,
+                             hitbox_w, hitbox_h, "rect")
+
+    def set_assets(self, assets: dict):
+        self.assets = assets
 
     def create_collision_boxs(self) -> list[list[list[RectangleBox]]]:
         boxes: list[list[list[RectangleBox]]] = [[
-                 [] for _ in range(self.maze_width)]
-                 for _ in range(self.maze_height)]
+            [] for _ in range(self.maze_width)]
+            for _ in range(self.maze_height)]
 
         for y in range(self.maze_height):
             for x in range(self.maze_width):
@@ -57,50 +70,6 @@ class Display:
                             int(2 * WALL_WIDTH)
                         )
                     )
-
-                    """ if self.grid[y][x] & NORTH and \
-                            self.grid[y][x] & WEST:
-                        boxes[y][x].append(
-                            RectangleBox(
-                                start_x - WALL_WIDTH,
-                                start_y - WALL_WIDTH,
-                                int(WALL_WIDTH),
-                                int(WALL_WIDTH)
-                            )
-                        )
-
-                    if self.grid[y - 1][x] & SOUTH and \
-                            self.grid[y - 1][x] & WEST:
-                        boxes[y - 1][x].append(
-                            RectangleBox(
-                                start_x - WALL_WIDTH,
-                                start_y,
-                                int(WALL_WIDTH),
-                                int(WALL_WIDTH)
-                            )
-                        )
-
-                    if self.grid[y][x - 1] & NORTH and \
-                            self.grid[y][x - 1] & EAST:
-                        boxes[y][x - 1].append(
-                            RectangleBox(
-                                start_x,
-                                start_y - WALL_WIDTH,
-                                int(WALL_WIDTH),
-                                int(WALL_WIDTH)
-                            )
-                        )
-
-                    if self.grid[y - 1][x - 1] & SOUTH and \
-                            self.grid[y - 1][x - 1] & EAST:
-                        boxes[y - 1][x - 1].append(
-                            RectangleBox(
-                                start_x,
-                                start_y,
-                                int(WALL_WIDTH),
-                                int(WALL_WIDTH)
-                            )
-                        ) """
 
                 # Box isolated cells
                 if cell == 15:
@@ -245,83 +214,14 @@ class Display:
                                       cell_height,
                                       WALL_COLOR)
 
-        for y in range(len(self.collision_boxs)):
+        """ for y in range(len(self.collision_boxs)):
             for x in range(len(self.collision_boxs[y])):
                 for el in self.collision_boxs[y][x]:
                     pr.draw_rectangle(
                         el.x, el.y,
                         el.width, el.height,
                         pr.WHITE
-                    )
-
-    def create_window(self):
-        pr.set_config_flags(pr.ConfigFlags.FLAG_WINDOW_RESIZABLE)
-        pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
-        pr.set_window_min_size(100, 100)
-        width = pr.get_screen_width()
-        height = pr.get_screen_height()
-        pr.init_window(width, height, "Pac-Man")
-        pr.set_target_fps(300)
-
-        self.assets = {
-            "pacman": {
-                (0, SPEED): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/3.png")
-                    )
-                ],
-                (0, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/3.png")
-                    )
-                ],
-                (0, -SPEED): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/3.png")
-                    )
-                ],
-                (SPEED, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/3.png")
-                    )
-                ],
-                (-SPEED, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/3.png")
-                    )
-                ]
-            }
-        }
+                    ) """
 
     def create_future_box(self, new_x: float, new_y: float) -> CollisionBox:
         if isinstance(self.player.box, CircleBox):
@@ -377,9 +277,9 @@ class Display:
         return collision_y
 
     def player_collision_events(
-                self,
-                new_x: float, new_y: float
-            ):
+        self,
+        new_x: float, new_y: float
+    ):
         base_y = self.player.y
 
         maze_pixels_x = self.maze_width * self.scale_x
@@ -478,34 +378,6 @@ class Display:
             entity.box.height *= scale_ratio_y
         entity.update_collision_box()
 
-    def resize_event(self):
-        old_scale_x = self.scale_x
-        old_scale_y = self.scale_y
-
-        self.screen_width = pr.get_screen_width() - 10
-        self.screen_height = pr.get_screen_height() - 10
-
-        if self.screen_width < self.maze_width or \
-                self.screen_height < self.maze_height:
-            return
-
-        self.scale_x = self.screen_width / self.maze_width
-        self.scale_y = self.screen_height / self.maze_height
-        self.scale_x = min([self.scale_x, self.scale_y])
-        self.scale_x -= self.scale_x % 2
-        self.scale_y = self.scale_x
-
-        if old_scale_x > 0 and old_scale_y > 0:
-            scale_ratio_x = self.scale_x / old_scale_x
-            scale_ratio_y = self.scale_y / old_scale_y
-
-            self.update_entity(self.player, scale_ratio_x, scale_ratio_y)
-
-            for entity in self.entities:
-                self.update_entity(entity, scale_ratio_x, scale_ratio_y)
-
-        self.collision_boxs = self.create_collision_boxs()
-
     def draw_player(self):
         # draw hitbox for debugging
 
@@ -525,32 +397,18 @@ class Display:
                           int(self.player.box.height),
                           pr.WHITE) """
 
-    def render_loop(self):
-        SIZE_PACMAN = self.update_radius()
-        self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
-        hitbox_w = self.scale_x - 2 * WALL_WIDTH
-        hitbox_h = self.scale_y - 2 * WALL_WIDTH
-        self.player = Player(int(self.scale_x / 2),
-                             int(self.scale_y / 2),
-                             SIZE_PACMAN,
-                             hitbox_w, hitbox_h, "rect")
-        self.resize_event()
-        while not pr.window_should_close():
-            if pr.is_window_resized():
-                self.resize_event()
-            pr.begin_drawing()
-            pr.clear_background(pr.BLACK)
-            self.draw_maze()
-            self.handle_events()
-            self.draw_player()
-            pr.draw_circle(int(self.entities[0].x),
-                           int(self.entities[0].y),
-                           (self.entities[0].radius),
-                           pr.RED)
+    def update(self) -> str:
+        pr.begin_drawing()
 
-            pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
+        self.draw_maze()
+        self.handle_events()
+        self.draw_player()
+        pr.draw_circle(int(self.entities[0].x),
+                       int(self.entities[0].y),
+                       (self.entities[0].radius),
+                       pr.RED)
 
-            pr.end_drawing()
+        pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 
-    def close_window(self):
-        pr.close_window()
+        pr.end_drawing()
+        return GAME_LOGIC

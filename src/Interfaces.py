@@ -1,6 +1,6 @@
 import pyray as pr
 from typing import Callable
-
+from abc import ABC, abstractmethod
 
 class Button:
     def __init__(self,
@@ -23,7 +23,7 @@ class Button:
             self.triggered_function()
 
 
-class Interface:
+class Interface(ABC):
     """class for the interfaces.
     we need to specify where buttons are and what they do """
 
@@ -38,7 +38,10 @@ class Interface:
         """This function removes a button from the interface"""
         self.buttons.remove(button)
 
-    def loop(self) -> None:
-        """function for the logic of this interface"""
+    @abstractmethod
+    def update(self) -> str:
+        """function for the logic of this interface
+        returns the name of the next state"""
         for button in self.buttons:
             button.update()
+        return ""
