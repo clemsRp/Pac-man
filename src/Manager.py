@@ -45,62 +45,25 @@ class GameManager:
 
     def load_assets(self):
         """function made to load assets"""
+        down1 = pr.load_image("assets/pacman-down/1.png")
+        pr.image_resize(down1, 64, 64)
+        tdown1 = pr.load_texture_from_image(down1)
         self.assets = {
             "pacman": {
-                (0, self.speed): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/3.png")
-                    )
+                "down": [
+                    down1, down2, down3
                 ],
-                (0, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-down/3.png")
-                    )
+                "static": [
+                    right1, right2, right3
                 ],
-                (0, -self.speed): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-up/3.png")
-                    )
+                "up": [
+                    up1, up2, up3
                 ],
-                (self.speed, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-right/3.png")
-                    )
+                "right": [
+                    right1, right2, right3
                 ],
-                (-self.speed, 0): [
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/1.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/2.png")
-                    ),
-                    pr.load_texture_from_image(
-                        pr.load_image("assets/pacman-left/3.png")
-                    )
+                "left": [
+                    left2, left2, left3
                 ]
             }
         }
