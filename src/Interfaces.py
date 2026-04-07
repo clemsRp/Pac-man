@@ -37,3 +37,8 @@ class Interface:
     def remove_button(self, button: Button) -> None:
         """This function removes a button from the interface"""
         self.buttons.remove(button)
+
+    def loop(self) -> None:
+        """function for the logic of this interface"""
+        for button in self.buttons:
+            button.update()
