@@ -6,6 +6,7 @@ from .Player import Player
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
+SPEED = 2.0
 
 
 class Display:
@@ -18,12 +19,17 @@ class Display:
         self.screen_height: int = 1500
         self.scale_x: float = self.screen_width / self.maze_width
         self.scale_y: float = self.screen_height / self.maze_height
+        self.scale_x = min([self.scale_x, self.scale_y])
+        self.scale_x -= self.scale_x % 2
+        self.scale_y = self.scale_x
         self.entities: list[CollisionBox] = []
         self.collision_boxs: list[
                                 list[
                                     list[
                                      RectangleBox]
                                      ]] = self.create_collision_boxs()
+
+        self.assets = {}
 
     def create_collision_boxs(self) -> list[list[list[RectangleBox]]]:
         boxes: list[list[list[RectangleBox]]] = [[
@@ -34,58 +40,124 @@ class Display:
             for x in range(self.maze_width):
                 cell = self.grid[y][x]
 
+                start_x = int(x * self.scale_x)
+                start_y = int(y * self.scale_y)
+                next_x = int((x + 1) * self.scale_x)
+                next_y = int((y + 1) * self.scale_y)
+                cell_width = next_x - start_x
+                cell_height = next_y - start_y
+
+                # Box corners
+                if y > 0 and x > 0:
+                    boxes[y][x].append(
+                        RectangleBox(
+                            start_x - WALL_WIDTH,
+                            start_y - WALL_WIDTH,
+                            int(2 * WALL_WIDTH),
+                            int(2 * WALL_WIDTH)
+                        )
+                    )
+
+                    """ if self.grid[y][x] & NORTH and \
+                            self.grid[y][x] & WEST:
+                        boxes[y][x].append(
+                            RectangleBox(
+                                start_x - WALL_WIDTH,
+                                start_y - WALL_WIDTH,
+                                int(WALL_WIDTH),
+                                int(WALL_WIDTH)
+                            )
+                        )
+
+                    if self.grid[y - 1][x] & SOUTH and \
+                            self.grid[y - 1][x] & WEST:
+                        boxes[y - 1][x].append(
+                            RectangleBox(
+                                start_x - WALL_WIDTH,
+                                start_y,
+                                int(WALL_WIDTH),
+                                int(WALL_WIDTH)
+                            )
+                        )
+
+                    if self.grid[y][x - 1] & NORTH and \
+                            self.grid[y][x - 1] & EAST:
+                        boxes[y][x - 1].append(
+                            RectangleBox(
+                                start_x,
+                                start_y - WALL_WIDTH,
+                                int(WALL_WIDTH),
+                                int(WALL_WIDTH)
+                            )
+                        )
+
+                    if self.grid[y - 1][x - 1] & SOUTH and \
+                            self.grid[y - 1][x - 1] & EAST:
+                        boxes[y - 1][x - 1].append(
+                            RectangleBox(
+                                start_x,
+                                start_y,
+                                int(WALL_WIDTH),
+                                int(WALL_WIDTH)
+                            )
+                        ) """
+
+                # Box isolated cells
+                if cell == 15:
+                    boxes[y][x].append(
+                        RectangleBox(
+                            start_x,
+                            start_y,
+                            cell_width,
+                            cell_height
+                        )
+                    )
+                    continue
+
+                # Box walls
                 if cell & NORTH:
                     boxes[y][x].append(
                         RectangleBox(
-                            x * self.scale_x,
-                            y * self.scale_y,
-                            self.scale_x,
-                            WALL_WIDTH
+                            start_x,
+                            start_y,
+                            cell_width,
+                            int(WALL_WIDTH)
                         )
                     )
 
                 if cell & SOUTH:
                     boxes[y][x].append(
                         RectangleBox(
-                            x * self.scale_x,
-                            (y + 1) * self.scale_y,
-                            self.scale_x,
-                            WALL_WIDTH
+                            start_x,
+                            next_y - WALL_WIDTH,
+                            cell_width,
+                            int(WALL_WIDTH),
                         )
                     )
-
                 if cell & EAST:
                     boxes[y][x].append(
                         RectangleBox(
-                            (x + 1) * self.scale_x,
-                            y * self.scale_y,
-                            WALL_WIDTH,
-                            self.scale_y + WALL_WIDTH
+                            next_x - WALL_WIDTH,
+                            start_y,
+                            int(WALL_WIDTH),
+                            cell_height,
                         )
                     )
 
                 if cell & WEST:
                     boxes[y][x].append(
                         RectangleBox(
-                            x * self.scale_x,
-                            y * self.scale_y,
-                            WALL_WIDTH,
-                            self.scale_y + WALL_WIDTH
+                            start_x,
+                            start_y,
+                            int(WALL_WIDTH),
+                            cell_height,
                         )
                     )
-
-                boxes[y][x].append(
-                    RectangleBox(
-                        (x + 1) * self.scale_x,
-                        (y + 1) * self.scale_y,
-                        WALL_WIDTH,
-                        WALL_WIDTH
-                    )
-                )
 
         return boxes
 
     def draw_maze(self):
+
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 start_x = int(x * self.scale_x)
@@ -95,6 +167,49 @@ class Display:
                 cell_width = next_x - start_x
                 cell_height = next_y - start_y
 
+                # Draw corners
+                if y > 0 and x > 0:
+                    if self.grid[y][x] & NORTH and \
+                            self.grid[y][x] & WEST:
+                        pr.draw_rectangle(
+                            start_x - WALL_WIDTH,
+                            start_y - WALL_WIDTH,
+                            int(WALL_WIDTH),
+                            int(WALL_WIDTH),
+                            WALL_COLOR
+                        )
+
+                    if self.grid[y - 1][x] & SOUTH and \
+                            self.grid[y - 1][x] & WEST:
+                        pr.draw_rectangle(
+                            start_x - WALL_WIDTH,
+                            start_y,
+                            int(WALL_WIDTH),
+                            int(WALL_WIDTH),
+                            WALL_COLOR
+                        )
+
+                    if self.grid[y][x - 1] & NORTH and \
+                            self.grid[y][x - 1] & EAST:
+                        pr.draw_rectangle(
+                            start_x,
+                            start_y - WALL_WIDTH,
+                            int(WALL_WIDTH),
+                            int(WALL_WIDTH),
+                            WALL_COLOR
+                        )
+
+                    if self.grid[y - 1][x - 1] & SOUTH and \
+                            self.grid[y - 1][x - 1] & EAST:
+                        pr.draw_rectangle(
+                            start_x,
+                            start_y,
+                            int(WALL_WIDTH),
+                            int(WALL_WIDTH),
+                            WALL_COLOR
+                        )
+
+                # Draw isolated cells
                 if self.grid[y][x] == 15:
                     pr.draw_rectangle(start_x,
                                       start_y,
@@ -103,6 +218,7 @@ class Display:
                                       WALL_COLOR)
                     continue
 
+                # Draw walls
                 if self.grid[y][x] & NORTH:
                     pr.draw_rectangle(start_x,
                                       start_y,
@@ -111,23 +227,32 @@ class Display:
                                       WALL_COLOR)
                 if self.grid[y][x] & SOUTH:
                     pr.draw_rectangle(start_x,
-                                      next_y,
+                                      next_y - WALL_WIDTH,
                                       cell_width,
                                       int(WALL_WIDTH),
                                       WALL_COLOR)
                 if self.grid[y][x] & EAST:
-                    pr.draw_rectangle(next_x,
+                    pr.draw_rectangle(next_x - WALL_WIDTH,
                                       start_y,
                                       int(WALL_WIDTH),
-                                      cell_height + WALL_WIDTH,
+                                      cell_height,
                                       WALL_COLOR)
 
                 if self.grid[y][x] & WEST:
                     pr.draw_rectangle(start_x,
                                       start_y,
                                       int(WALL_WIDTH),
-                                      cell_height + WALL_WIDTH,
+                                      cell_height,
                                       WALL_COLOR)
+
+        for y in range(len(self.collision_boxs)):
+            for x in range(len(self.collision_boxs[y])):
+                for el in self.collision_boxs[y][x]:
+                    pr.draw_rectangle(
+                        el.x, el.y,
+                        el.width, el.height,
+                        pr.WHITE
+                    )
 
     def create_window(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_WINDOW_RESIZABLE)
@@ -137,6 +262,66 @@ class Display:
         height = pr.get_screen_height()
         pr.init_window(width, height, "Pac-Man")
         pr.set_target_fps(300)
+
+        self.assets = {
+            "pacman": {
+                (0, SPEED): [
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/1.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/2.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/3.png")
+                    )
+                ],
+                (0, 0): [
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/1.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/2.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-down/3.png")
+                    )
+                ],
+                (0, -SPEED): [
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-up/1.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-up/2.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-up/3.png")
+                    )
+                ],
+                (SPEED, 0): [
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-right/1.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-right/2.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-right/3.png")
+                    )
+                ],
+                (-SPEED, 0): [
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-left/1.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-left/2.png")
+                    ),
+                    pr.load_texture_from_image(
+                        pr.load_image("assets/pacman-left/3.png")
+                    )
+                ]
+            }
+        }
 
     def create_future_box(self, new_x: float, new_y: float) -> CollisionBox:
         if isinstance(self.player.box, CircleBox):
@@ -243,7 +428,6 @@ class Display:
         return not collision_x and not collision_y
 
     def handle_events(self):
-        SPEED = 2.0
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.player.try_direction = (SPEED, 0)
             if self.can_move_direction(SPEED, 0):
@@ -307,6 +491,9 @@ class Display:
 
         self.scale_x = self.screen_width / self.maze_width
         self.scale_y = self.screen_height / self.maze_height
+        self.scale_x = min([self.scale_x, self.scale_y])
+        self.scale_x -= self.scale_x % 2
+        self.scale_y = self.scale_x
 
         if old_scale_x > 0 and old_scale_y > 0:
             scale_ratio_x = self.scale_x / old_scale_x
@@ -322,10 +509,16 @@ class Display:
     def draw_player(self):
         # draw hitbox for debugging
 
-        pr.draw_circle(int(self.player.x),
+        pr.draw_texture(
+            self.assets["pacman"][tuple(self.player.direction)][1],
+            int(self.player.x),
+            int(self.player.y),
+            pr.WHITE
+        )
+        """ pr.draw_circle(int(self.player.x),
                        int(self.player.y),
                        int(self.player.radius),
-                       pr.YELLOW)
+                       pr.YELLOW) """
         """ pr.draw_rectangle(int(self.player.box.x),
                           int(self.player.box.y),
                           int(self.player.box.width),
@@ -338,10 +531,10 @@ class Display:
         self.entities = []
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
         hitbox_h = self.scale_y - 2 * WALL_WIDTH
-        self.player = Player(self.scale_x // 2 + WALL_WIDTH - 2,
-                             self.scale_y // 2 + WALL_WIDTH,
+        self.player = Player(int(self.scale_x / 2),
+                             int(self.scale_y / 2),
                              SIZE_PACMAN,
-                             hitbox_w + 2, hitbox_h - 2, "rect")
+                             hitbox_w, hitbox_h, "rect")
         self.resize_event()
         while not pr.window_should_close():
             if pr.is_window_resized():
@@ -350,7 +543,6 @@ class Display:
             pr.clear_background(pr.BLACK)
             self.draw_maze()
             self.handle_events()
-            # pr.draw_circle(400, 200, 5.0, pr.WHITE)
             self.draw_player()
             # pr.draw_circle(int(self.entities[0].x),
             #                int(self.entities[0].y),
