@@ -156,9 +156,9 @@ class Display:
                           future_box_x: CollisionBox) -> bool:
 
         collision_x = False
-        for entity in self.entities:
-            if entity.box.collides_with(future_box_x):
-                return True
+        # for entity in self.entities:
+        #     if entity.box.collides_with(future_box_x):
+        #         return True
 
         for dy in [-1, 0, 1]:
             ny = int(box_y) + dy
@@ -175,9 +175,9 @@ class Display:
     def check_collision_y(self, box_x: int, new_y: float,
                           future_box_y: CollisionBox) -> bool:
         collision_y = False
-        for entity in self.entities:
-            if entity.box.collides_with(future_box_y):
-                return True
+        # for entity in self.entities:
+        #     if entity.box.collides_with(future_box_y):
+        #         return True
 
         for dy in [-1, 0, 1]:
             ny = int(new_y // self.scale_y) + dy
@@ -243,6 +243,7 @@ class Display:
         return not collision_x and not collision_y
 
     def handle_events(self):
+        """handles all """
         SPEED = 2.0
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.player.try_direction = (SPEED, 0)
@@ -334,8 +335,7 @@ class Display:
 
     def render_loop(self):
         SIZE_PACMAN = self.update_radius()
-        # self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
-        self.entities = []
+        self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
         hitbox_h = self.scale_y - 2 * WALL_WIDTH
         self.player = Player(self.scale_x // 2 + WALL_WIDTH - 2,
@@ -352,10 +352,10 @@ class Display:
             self.handle_events()
             # pr.draw_circle(400, 200, 5.0, pr.WHITE)
             self.draw_player()
-            # pr.draw_circle(int(self.entities[0].x),
-            #                int(self.entities[0].y),
-            #                (self.entities[0].radius),
-            #                pr.RED)
+            pr.draw_circle(int(self.entities[0].x),
+                           int(self.entities[0].y),
+                           (self.entities[0].radius),
+                           pr.RED)
 
             pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 
