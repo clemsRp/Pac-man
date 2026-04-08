@@ -1,4 +1,5 @@
 
+import os
 from .Interfaces import Interface
 import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
@@ -45,28 +46,28 @@ class GameManager:
 
     def load_assets(self):
         """function made to load assets"""
-        down1 = pr.load_image("assets/pacman-down/1.png")
-        pr.image_resize(down1, 64, 64)
-        tdown1 = pr.load_texture_from_image(down1)
-        self.assets = {
-            "pacman": {
-                "down": [
-                    down1, down2, down3
-                ],
-                "static": [
-                    right1, right2, right3
-                ],
-                "up": [
-                    up1, up2, up3
-                ],
-                "right": [
-                    right1, right2, right3
-                ],
-                "left": [
-                    left2, left2, left3
-                ]
-            }
+        directions = ["down", "up", "right", "left"]
+        paths = {
+            "pacman": "assets/pacman-"
         }
+        self.assets = {
+            "pacman": {}
+        }
+
+        for dire in directions:
+            self.assets["pacman"][dire] = []
+
+            contenu = os.listdir(paths["pacman"] + dire)
+            files = [f for f in contenu if os.path.isfile(
+                os.path.join(paths["pacman"] + dire, f)
+            )]
+
+            for f in files:
+                image = pr.load_image(paths["pacman"] + dire + "/" + f)
+                pr.image_resize(image, 64, 64)
+                self.assets["pacman"][dire].append(
+                    pr.load_texture_from_image(image)
+                )
 
     def close_window(self):
         pr.close_window()

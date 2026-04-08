@@ -380,11 +380,26 @@ class GameLogic(Interface):
 
     def draw_player(self):
         # draw hitbox for debugging
+        dire = "right"
+        cur_dir = self.player.direction
+        if cur_dir[0] == -SPEED:
+            dire = "left"
+        elif cur_dir[1] == SPEED:
+            dire = "down"
+        elif cur_dir[1] == -SPEED:
+            dire = "up"
+
+        index = 2
+        time = (pr.get_time() * 100) % 60
+        if time > 20:
+            index -= 1
+        if time > 40:
+            index -= 1
 
         pr.draw_texture(
-            self.assets["pacman"][tuple(self.player.direction)][1],
-            int(self.player.x),
-            int(self.player.y),
+            self.assets["pacman"][dire][index],
+            int(self.player.x - 32),
+            int(self.player.y - 32),
             pr.WHITE
         )
         """ pr.draw_circle(int(self.player.x),
@@ -403,10 +418,10 @@ class GameLogic(Interface):
         self.draw_maze()
         self.handle_events()
         self.draw_player()
-        pr.draw_circle(int(self.entities[0].x),
+        """ pr.draw_circle(int(self.entities[0].x),
                        int(self.entities[0].y),
                        (self.entities[0].radius),
-                       pr.RED)
+                       pr.RED) """
 
         pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 
