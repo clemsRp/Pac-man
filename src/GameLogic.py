@@ -47,7 +47,7 @@ class GameLogic(Interface):
         self.points = self.create_points()
 
     def set_assets(self, assets: dict):
-        self.assets = assets
+        super().set_assets(assets)
         self.ghosts = [
             Ghost(
                 self.assets["ghosts"]["pinky"],

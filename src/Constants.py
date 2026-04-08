@@ -6,3 +6,5 @@ WEST = 0b1000
 GAME_LOGIC = "gamelogic"
 MAIN_MENU = "mainmenu"
 EXIT = "exit"
+
+MAX_SCORES_SHOWN = 10

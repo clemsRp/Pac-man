@@ -39,6 +39,10 @@ class Interface(ABC):
         """This function removes a button from the interface"""
         self.buttons.remove(button)
 
+    def set_assets(self, assets: dict) -> None:
+        """This function sets the assets for the interface"""
+        self.assets = assets
+
     @abstractmethod
     def update(self) -> str:
         """function for the logic of this interface

@@ -45,16 +45,24 @@ class GameManager:
                 self.state = interface_result
             pr.end_drawing()
 
-    def create_window(self):
+    def create_window(self, width: int, height: int) -> tuple[int, int]:
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
         pr.set_window_min_size(100, 100)
-        width = pr.get_screen_width()
-        height = pr.get_screen_height()
+
         pr.init_window(width, height, "Pac-Man")
         pr.gui_load_style("pacman_style.rgs")
         pr.set_target_fps(300)
 
+        monitor = pr.get_current_monitor()
+
+        window_width = pr.get_monitor_width(monitor)
+        window_height = pr.get_monitor_height(monitor)
+
         self.load_assets()
+        return window_width, window_height
+
+    def set_window_size(self, width: int, height: int) -> None:
+        pr.set_window_size(width, height)
 
     def load_assets(self):
         """function made to load assets"""
