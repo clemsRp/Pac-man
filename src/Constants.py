@@ -5,4 +5,4 @@ WEST = 0b1000
 
 GAME_LOGIC = "gamelogic"
 MAIN_MENU = "mainmenu"
-SCORES_MENU = "scoresmenu"
+EXIT = "exit"
