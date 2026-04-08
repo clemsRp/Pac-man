@@ -1,6 +1,7 @@
 from .Interfaces import Interface, Button
 from .Constants import MAIN_MENU, GAME_LOGIC
 from .Constants import EXIT, MAX_SCORES_SHOWN
+from .Constants import PACMAN_SPRITE_QUALITY
 import pyray as pr
 from src.parser import Parser
 from src.Player import Player
@@ -15,9 +16,36 @@ class MainMenu(Interface):
         self.window_width = window_width
         self.window_height = window_height
         button_width = 600
-        self.background_pacman_speed = 3.0
+        self.background_pacman_speed = 5.0
         self.direction = "right"
         self.scores = parser.get_scores().get("players", [])
+        self.compute_scores()
+        button_height = 120
+
+        center_x = (self.window_width - button_width) // 2
+        center_y = (self.window_height - button_height) // 2
+        start_button = Button(center_x,
+                              center_y,
+                              button_width, button_height,
+                              "Start Game",
+                              pr.GREEN,
+                              self.start_game)
+
+        exit_button = Button(center_x,
+                             center_y + button_height + 10,
+                             button_width, button_height,
+                             "Exit",
+                             pr.RED,
+                             self.exit_game)
+        self.background_pacman = Player(30, 30, 200)
+
+        self.reset_pacman()
+
+        self.next_state = MAIN_MENU
+        self.add_button(start_button)
+        self.add_button(exit_button)
+
+    def compute_scores(self):
         self.scores = sorted(self.scores,
                              key=lambda x: x["score"],
                              reverse=True)
@@ -37,83 +65,94 @@ class MainMenu(Interface):
             self.best_player_score = player_totals[self.best_player_name]
         else:
             self.best_player_score = 0
-        button_height = 120
-
-        center_x = (self.window_width - button_width) // 2
-        center_y = (self.window_height - button_height) // 2
-        start_button = Button(center_x,
-                              center_y,
-                              button_width, button_height,
-                              "Start Game",
-                              pr.GREEN,
-                              self.start_game)
-
-        exit_button = Button(center_x,
-                             center_y + button_height + 10,
-                             button_width, button_height,
-                             "Exit",
-                             pr.RED,
-                             self.exit_game)
-        self.background_pacman = Player(30, 30, 100)
-
-        self.reset_pacman()
-
-        self.next_state = MAIN_MENU
-        self.add_button(start_button)
-        self.add_button(exit_button)
 
     def reset_pacman(self):
-        self.background_pacman.x = self.background_pacman.radius
+        self.background_pacman.x = -self.background_pacman.radius
         self.background_pacman.y = self.background_pacman.radius
         self.direction = "right"
 
     def update_background_pacman(self):
         direction = self.get_direciton_from_str(self.direction)
-        self.background_pacman.x += direction[0] * self.background_pacman_speed
+        self.background_pacman.x += direction * self.background_pacman_speed
 
         radius = self.background_pacman.radius
         line_height = self.background_pacman.radius * 2
 
         if self.direction == "right" and self.background_pacman.x \
-                > self.window_width + radius:
+                > self.window_width + 2 * radius:
             self.direction = "left"
+        
             self.background_pacman.y += line_height
 
-        elif self.direction == "left" and self.background_pacman.x < -radius:
+        elif self.direction == "left" and \
+                self.background_pacman.x < -2 * radius:
             self.direction = "right"
             self.background_pacman.y += line_height
 
-        if self.background_pacman.y > self.window_height + radius:
+        if self.background_pacman.y > self.window_height + 2 * radius:
             self.reset_pacman()
 
-    def get_direciton_from_str(self, direc: str) -> tuple[int, int]:
+    def get_direciton_from_str(self, direc: str) -> int:
         direc = direc.lower()
         if direc == "right":
-            return (1, 0)
+            return 1
         elif direc == "left":
-            return (-1, 0)
-        elif direc == "up":
-            return (0, -1)
-        elif direc == "down":
-            return (0, 1)
+            return -1
         else:
             raise ValueError("Invalid direction")
 
+    def draw_background_points(self):
+        radius = self.background_pacman.radius
+        cell_size = radius * 2
+        num_cells = int(self.window_width // cell_size) + 2
+
+        for i in range(num_cells):
+            cx = radius + i * cell_size
+            cy = self.background_pacman.y
+            
+            if self.direction == "right":
+                if self.background_pacman.x >= cx:
+                    continue
+            elif self.direction == "left":
+                if self.background_pacman.x <= cx:
+                    continue
+                    
+            pr.draw_circle(int(cx), int(cy), 13, pr.WHITE)
+
     def draw_background_pacman(self):
-        pr.draw_circle(
-            int(self.background_pacman.x),
-            int(self.background_pacman.y),
-            200,
-            pr.YELLOW
+        direction = self.direction
+        index = 2
+        time = (pr.get_time() * 100) % 60
+        if time > 20:
+            index -= 1
+        if time > 40:
+            index -= 1
+
+        texture = self.assets["pacman"][direction][index]
+
+        scale = self.background_pacman.radius / (PACMAN_SPRITE_QUALITY / 2)
+        pos_x = float(self.background_pacman.x -
+                        self.background_pacman.radius)
+        pos_y = float(self.background_pacman.y -
+                        self.background_pacman.radius)
+
+        pr.draw_texture_ex(
+            texture,
+            pr.Vector2(pos_x, pos_y),
+            0.0,
+            scale,
+            pr.WHITE
         )
+
 
     def start_game(self):
         self.next_state = GAME_LOGIC
 
     def update(self) -> str:
-        super().update()
         self.update_background_pacman()
+        self.draw_background_points()
         self.draw_background_pacman()
+        super().update()
         self.draw_leaderboard()
         return self.next_state
 

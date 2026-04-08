@@ -3,7 +3,7 @@ import os
 from .Interfaces import Interface
 import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
-from .Constants import EXIT
+from .Constants import EXIT, PACMAN_SPRITE_QUALITY
 
 
 class GameManager:
@@ -46,7 +46,7 @@ class GameManager:
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
-        pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
+        # pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
         pr.set_window_min_size(100, 100)
 
         pr.init_window(width, height, "Pac-Man")
@@ -86,7 +86,9 @@ class GameManager:
 
             for f in files:
                 image = pr.load_image(paths["pacman"] + dire + "/" + f)
-                pr.image_resize(image, 64, 64)
+                pr.image_resize(image,
+                                PACMAN_SPRITE_QUALITY, 
+                                PACMAN_SPRITE_QUALITY)
                 self.assets["pacman"][dire].append(
                     pr.load_texture_from_image(image)
                 )
@@ -98,7 +100,9 @@ class GameManager:
 
         for f in files:
             image = pr.load_image(paths["ghosts"] + f)
-            pr.image_resize(image, 64, 64)
+            pr.image_resize(image,
+                            64,
+                            64)
             self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
 
     def close_window(self):

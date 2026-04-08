@@ -5,7 +5,7 @@ from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (MAIN_MENU, GAME_LOGIC)
+from .Constants import (MAIN_MENU, GAME_LOGIC, PACMAN_SPRITE_QUALITY)
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
 SPEED = 2.0
@@ -424,7 +424,7 @@ class GameLogic(Interface):
             entity.box.height *= scale_ratio_y
         entity.update_collision_box()
 
-    def draw_points(self):
+    def draw_points(self) -> None:
         for point in self.points:
             x: int = int(
                 self.scale_x / 2 +
@@ -457,10 +457,16 @@ class GameLogic(Interface):
         if time > 40:
             index -= 1
 
-        pr.draw_texture(
-            self.assets["pacman"][dire][index],
-            int(self.player.x - 32),
-            int(self.player.y - 32),
+        texture = self.assets["pacman"][dire][index]
+        scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
+        pos_x = float(self.player.x - self.player.radius)
+        pos_y = float(self.player.y - self.player.radius)
+
+        pr.draw_texture_ex(
+            texture,
+            pr.Vector2(pos_x, pos_y),
+            0.0,
+            scale,
             pr.WHITE
         )
         """ pr.draw_circle(int(self.player.x),

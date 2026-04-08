@@ -8,3 +8,4 @@ MAIN_MENU = "mainmenu"
 EXIT = "exit"
 
 MAX_SCORES_SHOWN = 10
+PACMAN_SPRITE_QUALITY = 512
