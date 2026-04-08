@@ -1,7 +1,6 @@
 
 from .Physics import CircleBox, RectangleBox, CollisionBox
 from mazegenerator.mazegenerator import MazeGenerator
-from random import randint
 from .solve_maze import find_path
 from .Constants import SPEED
 
