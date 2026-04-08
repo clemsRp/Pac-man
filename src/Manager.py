@@ -5,6 +5,7 @@ import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import EXIT
 
+
 class GameManager:
     """class that manages the game"""
 
@@ -57,7 +58,7 @@ class GameManager:
 
     def load_assets(self):
         """function made to load assets"""
-        directions = ["down", "up", "right", "left"]
+        self.directions = ["down", "up", "right", "left"]
         paths = {
             "pacman": "assets/pacman-",
             "ghosts": "assets/ghosts/"
@@ -67,7 +68,7 @@ class GameManager:
             "ghosts": {}
         }
 
-        for dire in directions:
+        for dire in self.directions:
             self.assets["pacman"][dire] = []
 
             contenu = os.listdir(paths["pacman"] + dire)
@@ -90,7 +91,6 @@ class GameManager:
         for f in files:
             image = pr.load_image(paths["ghosts"] + f)
             pr.image_resize(image, 64, 64)
-            print(f[:-4])
             self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
 
     def close_window(self):
@@ -98,7 +98,9 @@ class GameManager:
 
     def free_assets(self):
         """function made to free assets"""
-        for i in self.assets:
-            for j in self.assets[i]:
-                for texture in self.assets[i][j]:
-                    pr.unload_texture(texture)
+        for textures in self.assets["pacman"].values():
+            for texture in textures:
+                pr.unload_texture(texture)
+
+        for texture in self.assets["ghosts"].values():
+            pr.unload_texture(texture)

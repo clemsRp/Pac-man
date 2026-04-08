@@ -37,8 +37,8 @@ class GameLogic(Interface):
         SIZE_PACMAN = self.update_radius()
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
         hitbox_h = self.scale_y - 2 * WALL_WIDTH
-        self.player = Player(int(self.scale_x / 2),
-                             int(self.scale_y / 2),
+        self.player = Player(int((0.5 + self.maze_width // 2) * self.scale_x),
+                             int((0.5 + self.maze_height // 2) * self.scale_y),
                              SIZE_PACMAN,
                              hitbox_w, hitbox_h, "rect")
 

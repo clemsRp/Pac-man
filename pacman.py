@@ -8,7 +8,7 @@ if __name__ == "__main__":
     try:
         parser = Parser()
         parser.parse_config("test.json")
-        maze_gen = MazeGenerator()
+        maze_gen = MazeGenerator((16, 16))
 
         game_manager = GameManager(maze_gen)
         game_manager.create_window()
