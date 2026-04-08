@@ -413,17 +413,14 @@ class GameLogic(Interface):
                           pr.WHITE) """
 
     def update(self) -> str:
-        pr.begin_drawing()
-
         self.draw_maze()
         self.handle_events()
         self.draw_player()
         """ pr.draw_circle(int(self.entities[0].x),
-                       int(self.entities[0].y),
-                       (self.entities[0].radius),
-                       pr.RED) """
+                        int(self.entities[0].y),
+                        (self.entities[0].radius),
+                        pr.RED) """
 
         pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
 
-        pr.end_drawing()
         return GAME_LOGIC

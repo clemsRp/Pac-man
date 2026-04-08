@@ -3,7 +3,7 @@ import os
 from .Interfaces import Interface
 import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
-
+from .Constants import EXIT
 
 class GameManager:
     """class that manages the game"""
@@ -16,23 +16,33 @@ class GameManager:
         self.maze_width: int = len(self.grid[0])
         self.interfaces: dict[str, Interface] = {}
         self.speed = 2.0
+        self.state = ""
         self.assets: dict = {}
 
     def add_interface(self, name: str, interface: Interface) -> None:
         """This function adds an interface to the manager"""
         self.interfaces[name] = interface
 
+    def set_state(self, state: str) -> None:
+        """This function sets the state of the game"""
+        if state not in self.interfaces:
+            raise ValueError("State not found")
+
+        self.state = state
+
     def start_game(self):
         """function for the logic of this interface"""
-        if not self.interfaces.get("gamelogic"):
-            raise Exception("No gamelogic interface found")
-        state = "gamelogic"
+
         while not pr.window_should_close():
+            pr.begin_drawing()
             pr.clear_background(pr.BLACK)
-            cur_interface = self.interfaces[state]
+            cur_interface = self.interfaces[self.state]
             interface_result = cur_interface.update()
-            if interface_result != "":
-                state = interface_result
+            if interface_result == EXIT:
+                break
+            if interface_result != self.state:
+                self.state = interface_result
+            pr.end_drawing()
 
     def create_window(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
@@ -40,6 +50,7 @@ class GameManager:
         width = pr.get_screen_width()
         height = pr.get_screen_height()
         pr.init_window(width, height, "Pac-Man")
+        pr.gui_load_style("pacman_style.rgs")
         pr.set_target_fps(300)
 
         self.load_assets()
@@ -68,6 +79,13 @@ class GameManager:
                 self.assets["pacman"][dire].append(
                     pr.load_texture_from_image(image)
                 )
+
+    def free_assets(self):
+        """function made to free assets"""
+        for i in self.assets:
+            for j in self.assets[i]:
+                for texture in self.assets[i][j]:
+                    pr.unload_texture(texture)
 
     def close_window(self):
         pr.close_window()

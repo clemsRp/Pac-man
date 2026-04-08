@@ -2,6 +2,7 @@ import pyray as pr
 from typing import Callable
 from abc import ABC, abstractmethod
 
+
 class Button:
     def __init__(self,
                  x: int,
