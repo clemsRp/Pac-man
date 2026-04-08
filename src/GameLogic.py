@@ -5,10 +5,11 @@ from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (MAIN_MENU, GAME_LOGIC)
+from .Constants import (GAME_LOGIC, SPEED)
+
+
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
-SPEED = 2.0
 
 
 class GameLogic(Interface):
@@ -37,10 +38,19 @@ class GameLogic(Interface):
         SIZE_PACMAN = self.update_radius()
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
         hitbox_h = self.scale_y - 2 * WALL_WIDTH
-        self.player = Player(int((0.5 + self.maze_width // 2) * self.scale_x),
-                             int((0.5 + self.maze_height // 2) * self.scale_y),
-                             SIZE_PACMAN,
-                             hitbox_w, hitbox_h, "rect")
+        is_pair = (self.maze_width % 2 + 1) % 2
+        self.player = Player(
+            int(
+                (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
+            ),
+            int(
+                (0.5 + self.maze_height // 2) * self.scale_y
+            ),
+            SIZE_PACMAN,
+            hitbox_w,
+            hitbox_h,
+            "rect"
+        )
 
         self.ghosts = []
 
@@ -316,11 +326,15 @@ class GameLogic(Interface):
                                 return True
         return collision_y
 
-    def player_collision_events(
+    def collision_events(
         self,
-        new_x: float, new_y: float
+        new_x: float, new_y: float,
+        ghost: Ghost | None = None
     ):
-        base_y = self.player.y
+        if ghost is None:
+            ghost = self.player
+
+        base_y = ghost.y
 
         maze_pixels_x = self.maze_width * self.scale_x
         maze_pixels_y = self.maze_height * self.scale_y
@@ -333,22 +347,29 @@ class GameLogic(Interface):
         collision_x = self.check_collision_x(box_y, new_x, future_box_x)
 
         if not collision_x:
-            self.player.x = new_x
+            ghost.x = new_x
 
-        future_box_y = self.create_future_box(self.player.x, new_y)
+        future_box_y = self.create_future_box(ghost.x, new_y)
 
-        box_x = int(self.player.x // self.scale_x)
+        box_x = int(ghost.x // self.scale_x)
         collision_y = self.check_collision_y(box_x, new_y, future_box_y)
 
         if not collision_y:
-            self.player.y = new_y
-        self.player.update_collision_box()
+            ghost.y = new_y
+        ghost.update_collision_box()
 
-    def can_move_direction(self, add_x: int, add_y: int) -> bool:
-        base_y = self.player.y
+    def can_move_direction(
+                self,
+                add_x: int, add_y: int,
+                ghost: Ghost | None = None,
+            ) -> bool:
+        if ghost is None:
+            ghost = self.player
 
-        new_x = self.player.x + add_x
-        new_y = self.player.y + add_y
+        base_y = ghost.y
+
+        new_x = ghost.x + add_x
+        new_y = ghost.y + add_y
 
         maze_pixels_x = self.maze_width * self.scale_x
         maze_pixels_y = self.maze_height * self.scale_y
@@ -360,14 +381,43 @@ class GameLogic(Interface):
         box_y = int(base_y // self.scale_y)
         collision_x = self.check_collision_x(box_y, new_x, future_box_x)
 
-        future_box_y = self.create_future_box(self.player.x, new_y)
+        future_box_y = self.create_future_box(ghost.x, new_y)
 
-        box_x = int(self.player.x // self.scale_x)
+        box_x = int(ghost.x // self.scale_x)
         collision_y = self.check_collision_y(box_x, new_y, future_box_y)
 
         return not collision_x and not collision_y
 
     def handle_events(self):
+        # Ghosts
+        for ghost in self.ghosts:
+            ghost.move(
+                self.grid,
+                int(self.player.x),
+                int(self.player.y),
+                int(self.scale_x),
+                int(self.scale_y)
+            )
+
+            add_ghost_x = ghost.direction[0]
+            add_ghost_y = ghost.direction[1]
+
+            if self.can_move_direction(
+                ghost.try_direction[0],
+                ghost.try_direction[1],
+                ghost
+            ):
+                ghost.direction = ghost.try_direction
+                add_ghost_x = ghost.try_direction[0]
+                add_ghost_y = ghost.try_direction[1]
+
+            self.collision_events(
+                ghost.x + add_ghost_x,
+                ghost.y + add_ghost_y,
+                ghost
+            )
+
+        # Player
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.player.try_direction = (SPEED, 0)
             if self.can_move_direction(SPEED, 0):
@@ -399,7 +449,7 @@ class GameLogic(Interface):
             add_x = self.player.try_direction[0]
             add_y = self.player.try_direction[1]
 
-        self.player_collision_events(
+        self.collision_events(
             self.player.x + add_x,
             self.player.y + add_y
         )

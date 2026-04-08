@@ -1,8 +1,14 @@
+
 from .Physics import CircleBox, RectangleBox, CollisionBox
+from mazegenerator.mazegenerator import MazeGenerator
+from random import randint
+from .solve_maze import find_path
+from .Constants import SPEED
 
 
 class Ghost:
-    def __init__(self, ghost, blue_ghost,
+    def __init__(self,
+                 ghost, blue_ghost,
                  x: float = 60, y: float = 60,
                  radius: float = 30,
                  box_width: int = 60,
@@ -21,6 +27,40 @@ class Ghost:
 
         self.ghost = ghost
         self.blue_ghost = blue_ghost
+
+        self.direction: tuple[int, int] = (0, 0)
+        self.try_direction: tuple[int, int] = (0, 0)
+
+    def move(
+                self, maze: MazeGenerator,
+                player_x: int, player_y: int,
+                scale_x: int, scale_y: int
+            ):
+        px = int((player_x - player_x % scale_x) / scale_x)
+        py = int((player_y - player_y % scale_y) / scale_y)
+
+        gx = int((self.x - self.x % scale_x) / scale_x)
+        gy = int((self.y - self.y % scale_y) / scale_y)
+
+        new_maze = [
+            [~c for c in row] for row in maze
+        ]
+
+        if px == gx and py == gy:
+            return
+
+        path = find_path(
+            new_maze, (gy, gx), (py, px)
+        )[0]
+
+        dire_x = 0
+        dire_y = 0
+
+        if path is not None and len(path) > 1:
+            dire_x = path[1][1] - path[0][1]
+            dire_y = path[1][0] - path[0][0]
+
+        self.try_direction = (dire_x * SPEED, dire_y * SPEED)
 
     def update_collision_box(self):
         if isinstance(self.box, CircleBox):
