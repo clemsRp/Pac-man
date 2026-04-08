@@ -48,10 +48,12 @@ class GameManager:
         """function made to load assets"""
         directions = ["down", "up", "right", "left"]
         paths = {
-            "pacman": "assets/pacman-"
+            "pacman": "assets/pacman-",
+            "ghosts": "assets/ghosts/"
         }
         self.assets = {
-            "pacman": {}
+            "pacman": {},
+            "ghosts": {}
         }
 
         for dire in directions:
@@ -68,6 +70,17 @@ class GameManager:
                 self.assets["pacman"][dire].append(
                     pr.load_texture_from_image(image)
                 )
+
+        contenu = os.listdir(paths["ghosts"])
+        files = [f for f in contenu if os.path.isfile(
+            os.path.join(paths["ghosts"], f)
+        )]
+
+        for f in files:
+            image = pr.load_image(paths["ghosts"] + f)
+            pr.image_resize(image, 64, 64)
+            print(f[:-4])
+            self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
 
     def close_window(self):
         pr.close_window()

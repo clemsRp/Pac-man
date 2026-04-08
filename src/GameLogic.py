@@ -3,6 +3,7 @@ from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
+from .Ghost import Ghost
 from .Interfaces import Interface
 from .Constants import (MAIN_MENU, GAME_LOGIC)
 WALL_WIDTH = 3
@@ -41,8 +42,38 @@ class GameLogic(Interface):
                              SIZE_PACMAN,
                              hitbox_w, hitbox_h, "rect")
 
+        self.ghosts = []
+
+        self.points = self.create_points()
+
     def set_assets(self, assets: dict):
         self.assets = assets
+        self.ghosts = [
+            Ghost(
+                self.assets["ghosts"]["pinky"],
+                self.assets["ghosts"]["blue_ghost"],
+                int(self.scale_x / 2),
+                int(self.scale_y / 2)
+            ),
+            Ghost(
+                self.assets["ghosts"]["clyde"],
+                self.assets["ghosts"]["blue_ghost"],
+                int(self.scale_x / 2),
+                int((self.maze_height - 0.5) * self.scale_y)
+            ),
+            Ghost(
+                self.assets["ghosts"]["inky"],
+                self.assets["ghosts"]["blue_ghost"],
+                int((self.maze_width - 0.5) * self.scale_x),
+                int(self.scale_y / 2)
+            ),
+            Ghost(
+                self.assets["ghosts"]["blinky"],
+                self.assets["ghosts"]["blue_ghost"],
+                int((self.maze_width - 0.5) * self.scale_x),
+                int((self.maze_height - 0.5) * self.scale_y)
+            )
+        ]
 
     def create_collision_boxs(self) -> list[list[list[RectangleBox]]]:
         boxes: list[list[list[RectangleBox]]] = [[
@@ -124,6 +155,15 @@ class GameLogic(Interface):
                     )
 
         return boxes
+
+    def create_points(self) -> list:
+        points = []
+        for y in range(self.maze_height):
+            for x in range(self.maze_width):
+                if self.grid[y][x] != 15:
+                    points.append((x, y))
+
+        return points
 
     def draw_maze(self):
 
@@ -364,6 +404,12 @@ class GameLogic(Interface):
             self.player.y + add_y
         )
 
+        px = self.player.x // self.scale_x
+        py = self.player.y // self.scale_y
+
+        if (px, py) in self.points:
+            self.points.remove((px, py))
+
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
 
@@ -377,6 +423,21 @@ class GameLogic(Interface):
             entity.box.width *= scale_ratio_x
             entity.box.height *= scale_ratio_y
         entity.update_collision_box()
+
+    def draw_points(self):
+        for point in self.points:
+            x: int = int(
+                self.scale_x / 2 +
+                point[0] * self.scale_x
+            )
+            y: int = int(
+                self.scale_y / 2 +
+                point[1] * self.scale_y
+            )
+
+            pr.draw_circle(
+                x, y, 10, pr.WHITE
+            )
 
     def draw_player(self):
         # draw hitbox for debugging
@@ -412,12 +473,23 @@ class GameLogic(Interface):
                           int(self.player.box.height),
                           pr.WHITE) """
 
+    def draw_ghosts(self):
+        for ghost in self.ghosts:
+            pr.draw_texture(
+                ghost.ghost,
+                int(ghost.x - 32),
+                int(ghost.y - 32),
+                pr.WHITE
+            )
+
     def update(self) -> str:
         pr.begin_drawing()
 
         self.draw_maze()
         self.handle_events()
+        self.draw_points()
         self.draw_player()
+        self.draw_ghosts()
         """ pr.draw_circle(int(self.entities[0].x),
                        int(self.entities[0].y),
                        (self.entities[0].radius),
