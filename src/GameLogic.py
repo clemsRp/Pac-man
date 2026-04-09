@@ -537,8 +537,16 @@ class GameLogic(Interface):
             pr.draw_texture_pro(
                 texture,
                 pr.Rectangle(0, 0, texture.width, texture.height),
-                pr.Rectangle(pos_x, pos_y, texture.width * scale, texture.height * scale),
-                pr.Vector2((texture.width * scale) / 2.0, (texture.height * scale) / 2.0),
+                pr.Rectangle(
+                    pos_x + CENTER_X,
+                    pos_y + CENTER_Y,
+                    texture.width * scale,
+                    texture.height * scale
+                ),
+                pr.Vector2(
+                    (texture.width * scale) / 2.0,
+                    (texture.height * scale) / 2.0
+                ),
                 rotation,
                 pr.WHITE
             )
