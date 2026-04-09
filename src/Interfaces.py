@@ -31,6 +31,17 @@ class Interface(ABC):
     def __init__(self) -> None:
         self.buttons: list[Button] = []
 
+    def get_rotation_from_str(self, direction: str) -> int:
+        if direction == "right":
+            return 90
+        elif direction == "left":
+            return -90
+        elif direction == "up":
+            return 0
+        elif direction == "down":
+            return 180
+        return 90
+
     def add_button(self, button: Button) -> None:
         """This function adds a button to the interface"""
         self.buttons.append(button)

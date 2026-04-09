@@ -123,30 +123,28 @@ class MainMenu(Interface):
 
             pr.draw_circle(int(cx), int(cy), 13, pr.WHITE)
 
+
+
     def draw_background_pacman(self):
         direction = self.direction
-        index = 2
-        time = (pr.get_time() * 100) % 60
-        if time > 20:
-            index -= 1
-        if time > 40:
-            index -= 1
+        pacman_len = len(self.assets["pacman"])
+        if pacman_len > 0:
+            index = int((pr.get_time() * 20)) % pacman_len
+            texture = self.assets["pacman"][index]
 
-        texture = self.assets["pacman"][direction][index]
+            scale = self.background_pacman.radius / (PACMAN_SPRITE_QUALITY / 2)
+            pos_x = float(self.background_pacman.x)
+            pos_y = float(self.background_pacman.y)
+            rotation = float(self.get_rotation_from_str(direction))
 
-        scale = self.background_pacman.radius / (PACMAN_SPRITE_QUALITY / 2)
-        pos_x = float(self.background_pacman.x -
-                      self.background_pacman.radius)
-        pos_y = float(self.background_pacman.y -
-                      self.background_pacman.radius)
-
-        pr.draw_texture_ex(
-            texture,
-            pr.Vector2(pos_x, pos_y),
-            0.0,
-            scale,
-            pr.WHITE
-        )
+            pr.draw_texture_pro(
+                texture,
+                pr.Rectangle(0, 0, texture.width, texture.height),
+                pr.Rectangle(pos_x, pos_y, texture.width * scale, texture.height * scale),
+                pr.Vector2((texture.width * scale) / 2.0, (texture.height * scale) / 2.0),
+                rotation,
+                pr.WHITE
+            )
 
     def start_game(self):
         self.next_state = GAME_LOGIC

@@ -522,29 +522,26 @@ class GameLogic(Interface):
             dire = "down"
         elif cur_dir[1] == -SPEED:
             dire = "up"
+        elif cur_dir[0] == SPEED:
+            dire = "right"
 
-        index = 2
-        time = (pr.get_time() * 100) % 60
-        if time > 20:
-            index -= 1
-        if time > 40:
-            index -= 1
+        pacman_len = len(self.assets["pacman"])
+        if pacman_len > 0:
+            index = int((pr.get_time() * 20)) % pacman_len
+            texture = self.assets["pacman"][index]
+            scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
+            pos_x = float(self.player.x)
+            pos_y = float(self.player.y)
+            rotation = float(self.get_rotation_from_str(dire))
 
-        texture = self.assets["pacman"][dire][index]
-        scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
-        pos_x = float(self.player.x - self.player.radius)
-        pos_y = float(self.player.y - self.player.radius)
-
-        pr.draw_texture_ex(
-            texture,
-            pr.Vector2(
-                pos_x + CENTER_X,
-                pos_y + CENTER_Y
-            ),
-            0.0,
-            scale,
-            pr.WHITE
-        )
+            pr.draw_texture_pro(
+                texture,
+                pr.Rectangle(0, 0, texture.width, texture.height),
+                pr.Rectangle(pos_x, pos_y, texture.width * scale, texture.height * scale),
+                pr.Vector2((texture.width * scale) / 2.0, (texture.height * scale) / 2.0),
+                rotation,
+                pr.WHITE
+            )
         """ pr.draw_circle(int(self.player.x),
                        int(self.player.y),
                        int(self.player.radius),
