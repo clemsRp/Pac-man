@@ -10,8 +10,8 @@ class Player:
         self.y: float = y
         self.radius = radius
         self.box: CollisionBox
-        self.box = CircleBox(x, y, radius)
-        self.wall_box = RectangleBox(x - box_width // 2,
+        self.hitbox = CircleBox(x, y, radius)
+        self.box = RectangleBox(x - box_width // 2,
                                 y - box_height // 2,
                                 box_width, box_height)
 

@@ -70,8 +70,7 @@ class GameLogic(Interface):
             ),
             SIZE_PACMAN,
             hitbox_w,
-            hitbox_h,
-            "rect"
+            hitbox_h
         )
 
         self.ghosts = []
