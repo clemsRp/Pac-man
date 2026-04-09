@@ -21,7 +21,7 @@ class GameLogic(Interface):
                 maze: MazeGenerator,
                 screen_width: int, screen_height: int
             ):
-        global CENTER_X, CENTER_Y
+        global CENTER_X, CENTER_Y, SPEED
 
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
@@ -37,7 +37,7 @@ class GameLogic(Interface):
         self.scale_y = self.scale_x
 
         self.score = 0
-        self.life = 2
+        self.life = 0
 
         self.t_start = 0
 
@@ -195,7 +195,6 @@ class GameLogic(Interface):
         return boxes
 
     def create_points(self) -> list:
-        self.t_start = time.time()
         points = []
         for y in range(self.maze_height):
             for x in range(self.maze_width):

@@ -42,6 +42,7 @@ if __name__ == "__main__":
         game_manager.set_state("mainmenu")
 
         game_logic.set_assets(game_manager.assets)
+        game_over.set_assets(game_manager.assets)
         game_manager.start_game()
         game_manager.free_assets()
         game_manager.close_window()

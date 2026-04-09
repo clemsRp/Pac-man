@@ -17,13 +17,16 @@ class GameOver(Interface):
         self.screen_width = screen_width
         self.screen_height = screen_height
 
+    def set_assets(self, assets: dict):
+        super().set_assets(assets)
+
     def update(self):
         font_size = 200
         center_title = pr.measure_text(
-            "GAME OVER", font_size
+            "GAME   VER", font_size
         )
         pr.draw_text(
-            "GAME OVER",
+            "GAME   VER",
             int(
                 self.screen_width / 2 -
                 center_title / 2
@@ -33,6 +36,19 @@ class GameOver(Interface):
                 font_size / 2
             ),
             font_size, pr.RED
+        )
+
+        pr.draw_texture(
+            self.assets["skull"],
+            int(
+                self.screen_width / 2 -
+                center_title / 2 + 575
+            ),
+            int(
+                self.screen_height / 3 -
+                font_size / 1.25
+            ),
+            pr.WHITE
         )
 
         return GAME_OVER

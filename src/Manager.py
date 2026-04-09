@@ -1,9 +1,10 @@
 
 import os
+import time
 from .Interfaces import Interface
 import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
-from .Constants import EXIT, PACMAN_SPRITE_QUALITY
+from .Constants import EXIT, PACMAN_SPRITE_QUALITY, GAME_LOGIC
 
 
 class GameManager:
@@ -39,11 +40,20 @@ class GameManager:
             pr.clear_background(pr.BLACK)
             cur_interface = self.interfaces[self.state]
             interface_result = cur_interface.update()
+
             if interface_result == EXIT:
                 break
 
+            state = False
+            if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
+                state = True
+
             if interface_result != self.state:
                 self.state = interface_result
+
+            if state:
+                self.interfaces[self.state].t_start = time.time()
+
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
@@ -77,8 +87,15 @@ class GameManager:
         }
 
         contenu = os.listdir(paths["pacman"])
-        files = [f for f in contenu if os.path.isfile(os.path.join(paths["pacman"], f))]
-        files.sort(key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else x)
+        files = [
+            f for f in contenu if os.path.isfile(
+                os.path.join(paths["pacman"], f)
+            )
+        ]
+        files.sort(
+            key=lambda x: int(x.split('.')[0])
+            if x.split('.')[0].isdigit() else x
+        )
 
         for f in files:
             image = pr.load_image(os.path.join(paths["pacman"], f))
@@ -100,6 +117,12 @@ class GameManager:
                             64,
                             64)
             self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
+
+        skull = pr.load_image("assets/other/skull.png")
+        pr.image_resize(skull,
+                        300,
+                        300)
+        self.assets["skull"] = pr.load_texture_from_image(skull)
 
     def close_window(self):
         pr.close_window()
