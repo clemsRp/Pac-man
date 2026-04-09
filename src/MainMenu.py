@@ -45,7 +45,7 @@ class MainMenu(Interface):
         self.add_button(start_button)
         self.add_button(exit_button)
 
-    def compute_scores(self):
+    def compute_scores(self) -> None:
         self.scores = sorted(self.scores,
                              key=lambda x: x["score"],
                              reverse=True)
@@ -76,21 +76,25 @@ class MainMenu(Interface):
         self.background_pacman.x += direction * self.background_pacman_speed
 
         radius = self.background_pacman.radius
-        line_height = self.background_pacman.radius * 2
+        line_height = radius * 2
+        max_y = self.window_height - 2 * radius
+        if (self.direction == "right" and
+            self.background_pacman.x > self.window_width + 2 * radius) or \
+                (self.direction == "left" and
+                 self.background_pacman.x < -2 * radius):
 
-        if self.direction == "right" and self.background_pacman.x \
-                > self.window_width + 2 * radius:
-            self.direction = "left"
-        
-            self.background_pacman.y += line_height
+            if self.background_pacman.y >= max_y:
+                self.reset_pacman()
+                return
 
-        elif self.direction == "left" and \
-                self.background_pacman.x < -2 * radius:
-            self.direction = "right"
-            self.background_pacman.y += line_height
+            next_y = self.background_pacman.y + line_height
 
-        if self.background_pacman.y > self.window_height + 2 * radius:
-            self.reset_pacman()
+            if next_y > max_y:
+                self.background_pacman.y = max_y
+            else:
+                self.background_pacman.y = next_y
+
+            self.direction = "left" if self.direction == "right" else "right"
 
     def get_direciton_from_str(self, direc: str) -> int:
         direc = direc.lower()
@@ -109,14 +113,14 @@ class MainMenu(Interface):
         for i in range(num_cells):
             cx = radius + i * cell_size
             cy = self.background_pacman.y
-            
+
             if self.direction == "right":
                 if self.background_pacman.x >= cx:
                     continue
             elif self.direction == "left":
                 if self.background_pacman.x <= cx:
                     continue
-                    
+
             pr.draw_circle(int(cx), int(cy), 13, pr.WHITE)
 
     def draw_background_pacman(self):
@@ -132,9 +136,9 @@ class MainMenu(Interface):
 
         scale = self.background_pacman.radius / (PACMAN_SPRITE_QUALITY / 2)
         pos_x = float(self.background_pacman.x -
-                        self.background_pacman.radius)
+                      self.background_pacman.radius)
         pos_y = float(self.background_pacman.y -
-                        self.background_pacman.radius)
+                      self.background_pacman.radius)
 
         pr.draw_texture_ex(
             texture,
@@ -143,7 +147,6 @@ class MainMenu(Interface):
             scale,
             pr.WHITE
         )
-
 
     def start_game(self):
         self.next_state = GAME_LOGIC
