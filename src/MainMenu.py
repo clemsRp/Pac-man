@@ -2,6 +2,7 @@ from .Interfaces import Interface, Button
 from .Constants import MAIN_MENU, GAME_LOGIC
 from .Constants import EXIT, MAX_SCORES_SHOWN
 from .Constants import PACMAN_SPRITE_QUALITY
+from .Physics import CollisionBox, CircleBox
 import pyray as pr
 from src.parser import Parser
 from src.Player import Player
@@ -20,6 +21,8 @@ class MainMenu(Interface):
         self.direction = "right"
         self.scores = parser.get_scores().get("players", [])
         self.compute_scores()
+        self.last_create_points_time: float = 0.0
+        self.time_between_points_creation = 0.1
         button_height = 120
 
         center_x = (self.window_width - button_width) // 2
@@ -37,7 +40,10 @@ class MainMenu(Interface):
                              "Exit",
                              pr.RED,
                              self.exit_game)
-        self.background_pacman = Player(30, 30, 200)
+        pac_size = 200
+        self.background_pacman = Player(30, 30, pac_size)
+
+        self.background_points: list[CollisionBox] = []
 
         self.reset_pacman()
 
@@ -70,8 +76,18 @@ class MainMenu(Interface):
         self.background_pacman.x = -self.background_pacman.radius
         self.background_pacman.y = self.background_pacman.radius
         self.direction = "right"
+        self.background_points = self.create_points(
+            self.background_pacman.y, self.window_width)
 
     def update_background_pacman(self):
+        # Wait until points are fully animated before moving
+        nb_points_to_show = int(
+            (pr.get_time() -
+             self.last_create_points_time) /
+            self.time_between_points_creation)
+        if nb_points_to_show < len(self.background_points):
+            return
+
         direction = self.get_direciton_from_str(self.direction)
         self.background_pacman.x += direction * self.background_pacman_speed
 
@@ -88,13 +104,41 @@ class MainMenu(Interface):
                 return
 
             next_y = self.background_pacman.y + line_height
-
             if next_y > max_y:
                 self.background_pacman.y = max_y
             else:
                 self.background_pacman.y = next_y
 
+            self.background_points = self.create_points(
+                self.background_pacman.y,
+                self.window_width)
             self.direction = "left" if self.direction == "right" else "right"
+        self.background_pacman.update_collision_box()
+        self.check_points_collision()
+
+    def check_points_collision(self) -> None:
+        if self.direction == "right":
+            to_remove = [i for i in self.background_points if
+                         i.center_x <= self.background_pacman.x]
+        else:
+            to_remove = [i for i in self.background_points if
+                         i.center_x >= self.background_pacman.x]
+
+        self.background_points = [i for i in self.background_points if
+                                  i not in to_remove]
+
+    def create_points(self, y: int, width: int) -> list[CollisionBox]:
+        radius = self.background_pacman.radius
+        cell_size = radius * 2
+        nb_points = int(width // cell_size) + 2
+
+        points: list[CollisionBox] = []
+        for i in range(nb_points):
+            cx = radius + i * cell_size
+            cy = y
+            points.append(CircleBox(cx, cy, radius))
+        self.last_create_points_time = pr.get_time()
+        return points
 
     def get_direciton_from_str(self, direc: str) -> int:
         direc = direc.lower()
@@ -105,27 +149,34 @@ class MainMenu(Interface):
         else:
             raise ValueError("Invalid direction")
 
+    def get_n_first_points(self, n: int, direction: str) -> list[CollisionBox]:
+        if direction == "right":
+            points = sorted(self.background_points,
+                            key=lambda x: x.center_x)
+        elif direction == "left":
+            points = sorted(self.background_points,
+                            key=lambda x: x.center_x, reverse=True)
+        return points[:n]
+
     def draw_background_points(self):
-        radius = self.background_pacman.radius
-        cell_size = radius * 2
-        num_cells = int(self.window_width // cell_size) + 2
-
-        for i in range(num_cells):
-            cx = radius + i * cell_size
-            cy = self.background_pacman.y
-
-            if self.direction == "right":
-                if self.background_pacman.x >= cx:
-                    continue
-            elif self.direction == "left":
-                if self.background_pacman.x <= cx:
-                    continue
-
-            pr.draw_circle(int(cx), int(cy), 13, pr.WHITE)
-
-
+        nb_points_to_show = int((pr.get_time() -
+                                 self.last_create_points_time) /
+                                self.time_between_points_creation)
+        nb_points_to_show = min(nb_points_to_show, len(self.background_points))
+        points = self.get_n_first_points(nb_points_to_show, self.direction)
+        for point in points:
+            cx = point.center_x
+            cy = point.center_y
+            pr.draw_circle(int(cx), int(cy), 23, pr.WHITE)
 
     def draw_background_pacman(self):
+        nb_points_to_show = int(
+            (pr.get_time() -
+             self.last_create_points_time) /
+            self.time_between_points_creation)
+        if nb_points_to_show < len(self.background_points):
+            return
+
         direction = self.direction
         pacman_len = len(self.assets["pacman"])
         if pacman_len > 0:
@@ -139,9 +190,13 @@ class MainMenu(Interface):
 
             pr.draw_texture_pro(
                 texture,
-                pr.Rectangle(0, 0, texture.width, texture.height),
-                pr.Rectangle(pos_x, pos_y, texture.width * scale, texture.height * scale),
-                pr.Vector2((texture.width * scale) / 2.0, (texture.height * scale) / 2.0),
+                pr.Rectangle(0, 0,
+                             texture.width, texture.height),
+                pr.Rectangle(pos_x, pos_y,
+                             texture.width * scale,
+                             texture.height * scale),
+                pr.Vector2((texture.width * scale) / 2.0,
+                           (texture.height * scale) / 2.0),
                 rotation,
                 pr.WHITE
             )
