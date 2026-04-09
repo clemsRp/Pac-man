@@ -15,3 +15,5 @@ DELTA: dict[int, tuple[int, int]] = {
     WEST: (0, -1),
     EAST: (0, 1),
 }
+MAX_SCORES_SHOWN = 10
+PACMAN_SPRITE_QUALITY = 512
