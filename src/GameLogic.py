@@ -3,6 +3,8 @@ import time
 from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
+from .PauseMenu import PauseMenu
+from .Interfaces import Button
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
@@ -22,7 +24,7 @@ class GameLogic(Interface):
                 screen_width: int, screen_height: int
             ):
         global CENTER_X, CENTER_Y, SPEED
-
+        super().__init__()
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
@@ -35,6 +37,24 @@ class GameLogic(Interface):
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
+        
+        buttons_width = 300
+        buttons_height = 50
+        window_offset = 40
+
+        pause_button_x = int(self.screen_width - buttons_width - window_offset)
+        pause_button_y = int(window_offset)
+        pause_button = Button(pause_button_x,
+                              pause_button_y,
+                              buttons_width,
+                              buttons_height,
+                              "Pause Game",
+                              color=pr.GRAY,
+                              triggered_function=self.pause_action)
+        self.add_button(pause_button)
+        self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
+        self.paused = False
+
 
         self.score = 0
         self.life = 0
@@ -83,6 +103,12 @@ class GameLogic(Interface):
         self.ghosts = []
 
         self.points = self.create_points()
+
+    def pause_action(self):
+        self.paused = not self.paused
+
+    def resume_game(self):
+        self.paused = False
 
     def set_assets(self, assets: dict):
         super().set_assets(assets)
@@ -429,6 +455,7 @@ class GameLogic(Interface):
         return not collision_x and not collision_y
 
     def handle_events(self):
+        """ Handle player input and ghost movement, check for collisions and update score/life"""
         # Ghosts
         if time.time() - self.t_start < 3:
             return
@@ -612,11 +639,19 @@ class GameLogic(Interface):
             )
 
     def update(self) -> str:
+        super().update()
         self.draw_maze()
-        self.handle_events()
+        if not self.paused:
+            self.handle_events()
         self.draw_points()
         self.draw_player()
         self.draw_ghosts()
+
+        if self.paused:
+            pause_menu_result: str = self.pause_menu.update()
+            if pause_menu_result == GAME_LOGIC:
+                self.resume_game()
+
         """ pr.draw_circle(int(self.entities[0].x),
                         int(self.entities[0].y),
                         (self.entities[0].radius),

@@ -9,6 +9,7 @@ GAME_LOGIC = "gamelogic"
 GAME_OVER = "gameover"
 MAIN_MENU = "mainmenu"
 EXIT = "exit"
+PAUSE_MENU = "pausemenu"
 
 DELTA: dict[int, tuple[int, int]] = {
     NORTH: (-1, 0),
