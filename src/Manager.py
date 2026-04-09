@@ -66,32 +66,27 @@ class GameManager:
 
     def load_assets(self):
         """function made to load assets"""
-        self.directions = ["down", "up", "right", "left"]
         paths = {
-            "pacman": "assets/pacman-",
+            "pacman": "assets/pacman",
             "ghosts": "assets/ghosts/"
         }
         self.assets = {
-            "pacman": {},
+            "pacman": [],
             "ghosts": {}
         }
 
-        for dire in self.directions:
-            self.assets["pacman"][dire] = []
+        contenu = os.listdir(paths["pacman"])
+        files = [f for f in contenu if os.path.isfile(os.path.join(paths["pacman"], f))]
+        files.sort(key=lambda x: int(x.split('.')[0]) if x.split('.')[0].isdigit() else x)
 
-            contenu = os.listdir(paths["pacman"] + dire)
-            files = [f for f in contenu if os.path.isfile(
-                os.path.join(paths["pacman"] + dire, f)
-            )]
-
-            for f in files:
-                image = pr.load_image(paths["pacman"] + dire + "/" + f)
-                pr.image_resize(image,
-                                PACMAN_SPRITE_QUALITY, 
-                                PACMAN_SPRITE_QUALITY)
-                self.assets["pacman"][dire].append(
-                    pr.load_texture_from_image(image)
-                )
+        for f in files:
+            image = pr.load_image(os.path.join(paths["pacman"], f))
+            pr.image_resize(image,
+                            PACMAN_SPRITE_QUALITY,
+                            PACMAN_SPRITE_QUALITY)
+            self.assets["pacman"].append(
+                pr.load_texture_from_image(image)
+            )
 
         contenu = os.listdir(paths["ghosts"])
         files = [f for f in contenu if os.path.isfile(
@@ -110,9 +105,8 @@ class GameManager:
 
     def free_assets(self):
         """function made to free assets"""
-        for textures in self.assets["pacman"].values():
-            for texture in textures:
-                pr.unload_texture(texture)
+        for texture in self.assets["pacman"]:
+            pr.unload_texture(texture)
 
         for texture in self.assets["ghosts"].values():
             pr.unload_texture(texture)
