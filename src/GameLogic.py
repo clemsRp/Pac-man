@@ -6,24 +6,48 @@ from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
 from .Constants import (SPEED, GAME_LOGIC, PACMAN_SPRITE_QUALITY)
+
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
+
+CENTER_X = 0
+CENTER_Y = 0
 
 
 class GameLogic(Interface):
     def __init__(self, maze: MazeGenerator,
                  screen_width: int, screen_height: int):
+        global CENTER_X, CENTER_Y
+
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
         self.maze_width: int = len(self.grid[0])
         self.screen_width: int = screen_width
         self.screen_height: int = screen_height
+
         self.scale_x: float = self.screen_width / self.maze_width
         self.scale_y: float = self.screen_height / self.maze_height
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
+
+        CENTER_X = int(
+            (
+                screen_width - self.scale_x * self.maze_width
+            ) / 2
+        )
+        CENTER_Y = int(
+            (
+                screen_height - self.scale_y * self.maze_height
+            ) / 2
+        )
+
+        CENTER_X -= CENTER_X % 10
+        CENTER_Y -= CENTER_Y % 10
+
+        print(CENTER_X, CENTER_Y)
+
         self.entities: list[CollisionBox] = []
         self.collision_boxs: list[
             list[
@@ -189,8 +213,8 @@ class GameLogic(Interface):
                     if self.grid[y][x] & NORTH and \
                             self.grid[y][x] & WEST:
                         pr.draw_rectangle(
-                            start_x - WALL_WIDTH,
-                            start_y - WALL_WIDTH,
+                            start_x - WALL_WIDTH + CENTER_X,
+                            start_y - WALL_WIDTH + CENTER_Y,
                             int(WALL_WIDTH),
                             int(WALL_WIDTH),
                             WALL_COLOR
@@ -199,8 +223,8 @@ class GameLogic(Interface):
                     if self.grid[y - 1][x] & SOUTH and \
                             self.grid[y - 1][x] & WEST:
                         pr.draw_rectangle(
-                            start_x - WALL_WIDTH,
-                            start_y,
+                            start_x - WALL_WIDTH + CENTER_X,
+                            start_y + CENTER_Y,
                             int(WALL_WIDTH),
                             int(WALL_WIDTH),
                             WALL_COLOR
@@ -209,8 +233,8 @@ class GameLogic(Interface):
                     if self.grid[y][x - 1] & NORTH and \
                             self.grid[y][x - 1] & EAST:
                         pr.draw_rectangle(
-                            start_x,
-                            start_y - WALL_WIDTH,
+                            start_x + CENTER_X,
+                            start_y - WALL_WIDTH + CENTER_Y,
                             int(WALL_WIDTH),
                             int(WALL_WIDTH),
                             WALL_COLOR
@@ -219,8 +243,8 @@ class GameLogic(Interface):
                     if self.grid[y - 1][x - 1] & SOUTH and \
                             self.grid[y - 1][x - 1] & EAST:
                         pr.draw_rectangle(
-                            start_x,
-                            start_y,
+                            start_x + CENTER_X,
+                            start_y + CENTER_Y,
                             int(WALL_WIDTH),
                             int(WALL_WIDTH),
                             WALL_COLOR
@@ -228,8 +252,8 @@ class GameLogic(Interface):
 
                 # Draw isolated cells
                 if self.grid[y][x] == 15:
-                    pr.draw_rectangle(start_x,
-                                      start_y,
+                    pr.draw_rectangle(start_x + CENTER_X,
+                                      start_y + CENTER_Y,
                                       cell_width,
                                       cell_height,
                                       WALL_COLOR)
@@ -237,27 +261,27 @@ class GameLogic(Interface):
 
                 # Draw walls
                 if self.grid[y][x] & NORTH:
-                    pr.draw_rectangle(start_x,
-                                      start_y,
+                    pr.draw_rectangle(start_x + CENTER_X,
+                                      start_y + CENTER_Y,
                                       cell_width,
                                       int(WALL_WIDTH),
                                       WALL_COLOR)
                 if self.grid[y][x] & SOUTH:
-                    pr.draw_rectangle(start_x,
-                                      next_y - WALL_WIDTH,
+                    pr.draw_rectangle(start_x + CENTER_X,
+                                      next_y - WALL_WIDTH + CENTER_Y,
                                       cell_width,
                                       int(WALL_WIDTH),
                                       WALL_COLOR)
                 if self.grid[y][x] & EAST:
-                    pr.draw_rectangle(next_x - WALL_WIDTH,
-                                      start_y,
+                    pr.draw_rectangle(next_x - WALL_WIDTH + CENTER_X,
+                                      start_y + CENTER_Y,
                                       int(WALL_WIDTH),
                                       cell_height,
                                       WALL_COLOR)
 
                 if self.grid[y][x] & WEST:
-                    pr.draw_rectangle(start_x,
-                                      start_y,
+                    pr.draw_rectangle(start_x + CENTER_X,
+                                      start_y + CENTER_Y,
                                       int(WALL_WIDTH),
                                       cell_height,
                                       WALL_COLOR)
@@ -484,7 +508,9 @@ class GameLogic(Interface):
             )
 
             pr.draw_circle(
-                x, y, 10, pr.WHITE
+                x + CENTER_X,
+                y + CENTER_Y,
+                10, pr.WHITE
             )
 
     def draw_player(self):
@@ -512,7 +538,10 @@ class GameLogic(Interface):
 
         pr.draw_texture_ex(
             texture,
-            pr.Vector2(pos_x, pos_y),
+            pr.Vector2(
+                pos_x + CENTER_X,
+                pos_y + CENTER_Y
+            ),
             0.0,
             scale,
             pr.WHITE
@@ -531,8 +560,8 @@ class GameLogic(Interface):
         for ghost in self.ghosts:
             pr.draw_texture(
                 ghost.ghost,
-                int(ghost.x - 32),
-                int(ghost.y - 32),
+                int(ghost.x - 32 + CENTER_X),
+                int(ghost.y - 32 + CENTER_Y),
                 pr.WHITE
             )
 
@@ -547,6 +576,11 @@ class GameLogic(Interface):
                         (self.entities[0].radius),
                         pr.RED) """
 
-        pr.draw_text("Score: 42", 10, 10, 20, pr.RAYWHITE)
+        pr.draw_text(
+            "Score: 42",
+            10 + CENTER_X,
+            10 + CENTER_Y,
+            20, pr.RAYWHITE
+        )
 
         return GAME_LOGIC

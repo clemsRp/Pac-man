@@ -56,7 +56,7 @@ class GameManager:
         monitor = pr.get_current_monitor()
 
         window_width = pr.get_monitor_width(monitor)
-        window_height = pr.get_monitor_height(monitor)
+        window_height = pr.get_monitor_height(monitor) - 100
 
         self.load_assets()
         return window_width, window_height
@@ -87,7 +87,7 @@ class GameManager:
             for f in files:
                 image = pr.load_image(paths["pacman"] + dire + "/" + f)
                 pr.image_resize(image,
-                                PACMAN_SPRITE_QUALITY, 
+                                PACMAN_SPRITE_QUALITY,
                                 PACMAN_SPRITE_QUALITY)
                 self.assets["pacman"][dire].append(
                     pr.load_texture_from_image(image)

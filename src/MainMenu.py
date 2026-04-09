@@ -163,6 +163,9 @@ class MainMenu(Interface):
         """Dessine le tableau des
         scores avec des dimensions et polices agrandies"""
 
+        if len(self.scores) == 0:
+            return
+
         scores_menu_width = 500
         scores_menu_height = 700
         menu_x = (self.window_width * 2 // 3) - (scores_menu_width // 2)

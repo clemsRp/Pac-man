@@ -5,18 +5,15 @@ class Player:
     def __init__(self, x: float = 60, y: float = 60,
                  radius: float = 30,
                  box_width: int = 60,
-                 box_height: int = 60,
-                 box_type: str = "circle"):
+                 box_height: int = 60):
         self.x: float = x
         self.y: float = y
         self.radius = radius
         self.box: CollisionBox
-        if box_type == "circle":
-            self.box = CircleBox(x, y, radius)
-        else:
-            self.box = RectangleBox(x - box_width // 2,
-                                    y - box_height // 2,
-                                    box_width, box_height)
+        self.box = CircleBox(x, y, radius)
+        self.wall_box = RectangleBox(x - box_width // 2,
+                                y - box_height // 2,
+                                box_width, box_height)
 
         self.direction: tuple[int, int] = (0, 0)
         self.try_direction: tuple[int, int] = (0, 0)

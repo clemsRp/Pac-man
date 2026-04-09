@@ -19,9 +19,9 @@ if __name__ == "__main__":
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
 
-        game_manager.set_window_size(window_width - 150,
-                                     window_height - 150)
-        pr.set_window_position(75, 75)
+        game_manager.set_window_size(window_width,
+                                     window_height)
+        pr.set_window_position(0, 0)
 
         main_menu = MainMenu(window_width,
                              window_height,

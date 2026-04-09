@@ -230,48 +230,39 @@ Too many keys"
             }
 
         # players
-        if not isinstance(scores["players"], list) or \
+        """ if not isinstance(scores["players"], list) or \
                 len(scores["players"]) == 0:
             errors.append(
                 "players must be a non-empty list of dict"
-            )
-        else:
-            additional_keys: list[str] = [
-                "pseudo", "score"
-            ]
-            pseudos: list[str] = []
+            ) """
+        additional_keys: list[str] = [
+            "pseudo", "score"
+        ]
+        for player in scores["players"]:
+            if not all([key in player for key in additional_keys]):
+                errors.append(
+                    "Missing keys for player"
+                )
+            elif len(player) > len(additional_keys):
+                errors.append(
+                    "Too many keys for player"
+                )
 
-            for player in scores["players"]:
-                if not all([key in player for key in additional_keys]):
-                    errors.append(
-                        "Missing keys for player"
-                    )
-                elif len(player) > len(additional_keys):
-                    errors.append(
-                        "Too many keys for player"
-                    )
+            if not isinstance(player["pseudo"], str):
+                errors.append(
+                    "player pseudo must be a str"
+                )
+            elif not player["pseudo"].replace(" ", "").isalpha() or \
+                    len(player["pseudo"]) > 10:
+                errors.append(
+                    f"Invalid pseudo '{player['pseudo']}'"
+                )
 
-                if not isinstance(player["pseudo"], str):
-                    errors.append(
-                        "player pseudo must be a str"
-                    )
-                elif player["pseudo"] in pseudos:
-                    errors.append(
-                        f"player pseudo already exist '{player['pseudo']}'"
-                    )
-                elif not player["pseudo"].replace(" ", "").isalpha() or \
-                        len(player["pseudo"]) > 10:
-                    errors.append(
-                        f"Invalid pseudo '{player['pseudo']}'"
-                    )
-                else:
-                    pseudos.append(player["pseudo"])
-
-                if not isinstance(player["score"], int) or\
-                        player["score"] < 0:
-                    errors.append(
-                        "player score must be a positive int"
-                    )
+            if not isinstance(player["score"], int) or\
+                    player["score"] < 0:
+                errors.append(
+                    "player score must be a positive int"
+                )
 
         state: bool = True
         message: str = "Everything is alright"
