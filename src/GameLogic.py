@@ -1,11 +1,12 @@
 import pyray as pr
+import time
 from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (SPEED, GAME_LOGIC, PACMAN_SPRITE_QUALITY)
+from .Constants import (SPEED, GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
@@ -15,8 +16,11 @@ CENTER_Y = 0
 
 
 class GameLogic(Interface):
-    def __init__(self, maze: MazeGenerator,
-                 screen_width: int, screen_height: int):
+    def __init__(
+                self,
+                maze: MazeGenerator,
+                screen_width: int, screen_height: int
+            ):
         global CENTER_X, CENTER_Y
 
         self.maze: MazeGenerator = maze
@@ -32,6 +36,11 @@ class GameLogic(Interface):
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
 
+        self.score = 0
+        self.life = 2
+
+        self.t_start = 0
+
         CENTER_X = int(
             (
                 screen_width - self.scale_x * self.maze_width
@@ -45,8 +54,6 @@ class GameLogic(Interface):
 
         CENTER_X -= CENTER_X % 10
         CENTER_Y -= CENTER_Y % 10
-
-        print(CENTER_X, CENTER_Y)
 
         self.entities: list[CollisionBox] = []
         self.collision_boxs: list[
@@ -188,11 +195,24 @@ class GameLogic(Interface):
         return boxes
 
     def create_points(self) -> list:
+        self.t_start = time.time()
         points = []
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 if self.grid[y][x] != 15:
-                    points.append((x, y))
+                    pos_x = int(
+                        (x + 0.5) * self.scale_x
+                    )
+                    pos_y = int(
+                        (y + 0.5) * self.scale_y
+                    )
+                    points.append(
+                        CircleBox(
+                            pos_x,
+                            pos_y,
+                            10
+                        )
+                    )
 
         return points
 
@@ -411,6 +431,8 @@ class GameLogic(Interface):
 
     def handle_events(self):
         # Ghosts
+        if time.time() - self.t_start < 3:
+            return
         for ghost in self.ghosts:
             ghost.move(
                 self.grid,
@@ -475,11 +497,41 @@ class GameLogic(Interface):
             self.player.y + add_y
         )
 
-        px = self.player.x // self.scale_x
-        py = self.player.y // self.scale_y
+        points = []
+        for point in self.points:
+            if point.collides_with(self.player.hitbox):
+                self.score += 10
+                points.append(point)
 
-        if (px, py) in self.points:
-            self.points.remove((px, py))
+        for point in points:
+            self.points.remove(point)
+
+        for ghost in self.ghosts:
+            if ghost.hitbox.collides_with(self.player.hitbox):
+                self.life -= 1
+                self.ghosts[0].x = int(self.scale_x / 2)
+                self.ghosts[0].y = int(self.scale_y / 2)
+
+                self.ghosts[1].x = int(self.scale_x / 2)
+                self.ghosts[1].y = int((self.maze_height - 0.5) * self.scale_y)
+
+                self.ghosts[2].x = int((self.maze_width - 0.5) * self.scale_x)
+                self.ghosts[2].y = int(self.scale_y / 2)
+
+                self.ghosts[3].x = int((self.maze_width - 0.5) * self.scale_x)
+                self.ghosts[3].y = int((self.maze_height - 0.5) * self.scale_y)
+
+                is_pair = (self.maze_width % 2 + 1) % 2
+                self.player.x = int(
+                        (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
+                    )
+                self.player.y = int(
+                        (0.5 + self.maze_height // 2) * self.scale_y
+                    )
+                self.player.direction = (0, 0)
+                self.player.try_direction = (0, 0)
+
+                self.t_start = time.time()
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -497,19 +549,10 @@ class GameLogic(Interface):
 
     def draw_points(self) -> None:
         for point in self.points:
-            x: int = int(
-                self.scale_x / 2 +
-                point[0] * self.scale_x
-            )
-            y: int = int(
-                self.scale_y / 2 +
-                point[1] * self.scale_y
-            )
-
             pr.draw_circle(
-                x + CENTER_X,
-                y + CENTER_Y,
-                10, pr.WHITE
+                point.center_x + CENTER_X,
+                point.center_y + CENTER_Y,
+                point.radius, pr.WHITE
             )
 
     def draw_player(self):
@@ -581,10 +624,33 @@ class GameLogic(Interface):
                         pr.RED) """
 
         pr.draw_text(
-            "Score: 42",
+            "Score: " + str(self.score),
             10 + CENTER_X,
             10 + CENTER_Y,
             20, pr.RAYWHITE
         )
+
+        for k in range(self.life):
+            texture = self.assets["pacman"][1]
+            scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
+
+            pr.draw_texture_pro(
+                texture,
+                pr.Rectangle(0, 0, texture.width, texture.height),
+                pr.Rectangle(
+                    70 + k * 80,
+                    70,
+                    64, 64
+                ),
+                pr.Vector2(
+                    (texture.width * scale) / 2.0,
+                    (texture.height * scale) / 2.0
+                ),
+                0,
+                pr.WHITE
+            )
+
+        if self.life == -1:
+            return GAME_OVER
 
         return GAME_LOGIC

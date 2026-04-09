@@ -11,21 +11,22 @@ class Player:
         self.radius = radius
         self.box: CollisionBox
         self.hitbox = CircleBox(x, y, radius)
-        self.box = RectangleBox(x - box_width // 2,
-                                y - box_height // 2,
-                                box_width, box_height)
+        self.box = RectangleBox(
+            x - box_width // 2,
+            y - box_height // 2,
+            box_width,
+            box_height
+        )
 
         self.direction: tuple[int, int] = (0, 0)
         self.try_direction: tuple[int, int] = (0, 0)
 
     def update_collision_box(self):
-        if isinstance(self.box, CircleBox):
-            self.box.center_x = self.x
-            self.box.center_y = self.y
-            self.box.radius = self.radius
-        elif isinstance(self.box, RectangleBox):
-            self.box.x = self.x - self.box.width // 2
-            self.box.y = self.y - self.box.height // 2
+        # update circle box
+        self.hitbox.center_x = self.x
+        self.hitbox.center_y = self.y
+        self.hitbox.radius = self.radius
 
-        else:
-            raise TypeError("Invalid Collision Box")
+        # update rectangle box
+        self.box.x = self.x - self.box.width // 2
+        self.box.y = self.y - self.box.height // 2

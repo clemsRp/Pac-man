@@ -6,6 +6,7 @@ WEST = 0b1000
 SPEED = 2.0
 
 GAME_LOGIC = "gamelogic"
+GAME_OVER = "gameover"
 MAIN_MENU = "mainmenu"
 EXIT = "exit"
 

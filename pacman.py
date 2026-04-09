@@ -3,6 +3,7 @@ from src.Manager import GameManager
 from src.parser import Parser
 from mazegenerator.mazegenerator import MazeGenerator
 from src.GameLogic import GameLogic
+from src.GameOver import GameOver
 from src.MainMenu import MainMenu
 import pyray as pr
 if __name__ == "__main__":
@@ -30,10 +31,14 @@ if __name__ == "__main__":
 
         game_logic = GameLogic(maze_gen, window_width, window_height)
 
+        game_over = GameOver(window_width, window_height)
+
         game_manager.add_interface("gamelogic",
                                    game_logic)
         game_manager.add_interface("mainmenu",
                                    main_menu)
+        game_manager.add_interface("gameover",
+                                   game_over)
         game_manager.set_state("mainmenu")
 
         game_logic.set_assets(game_manager.assets)

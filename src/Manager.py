@@ -41,6 +41,7 @@ class GameManager:
             interface_result = cur_interface.update()
             if interface_result == EXIT:
                 break
+
             if interface_result != self.state:
                 self.state = interface_result
             pr.end_drawing()
