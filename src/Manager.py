@@ -2,17 +2,26 @@
 import os
 import time
 from .Interfaces import Interface
+from .parser import Parser
 import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
-from .Constants import EXIT, PACMAN_SPRITE_QUALITY, GAME_LOGIC
+from .Constants import (
+    EXIT, PACMAN_SPRITE_QUALITY,
+    GAME_LOGIC, MAIN_MENU, GAME_OVER
+)
 
 
 class GameManager:
     """class that manages the game"""
 
-    def __init__(self, maze: MazeGenerator) -> None:
+    def __init__(
+                self, maze: MazeGenerator,
+                parser: Parser, config_file: str
+            ) -> None:
 
         self.maze: MazeGenerator = maze
+        self.parser: Parser = parser
+        self.config_file: str = config_file
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
         self.maze_width: int = len(self.grid[0])
@@ -48,6 +57,14 @@ class GameManager:
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
                 state = True
 
+            if self.state != MAIN_MENU and interface_result == MAIN_MENU:
+                self.parser.parse_config(self.config_file)
+                self.interfaces[interface_result].scores = (
+                    self.parser.get_scores().get("players", [])
+                )
+
+            if self.state != GAME_OVER and interface_result == GAME_OVER:
+                self.interfaces["gameover"].state = GAME_OVER
             if interface_result != self.state:
                 self.state = interface_result
 

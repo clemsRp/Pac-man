@@ -1,7 +1,70 @@
 [
 	{
-		"players": [
-			{"pseudo": "cocopops", "score": 99999999999999999999999999}
-		]
+	    "players": [
+	        {
+	            "pseudo": "cocopops",
+	            "score": 999
+	        },
+	        {
+	            "pseudo": "crappo",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "ojfdbpbnnb",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "ygrJBNKBK",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        },
+	        {
+	            "pseudo": "l",
+	            "score": 4242
+	        }
+	    ]
 	}
 ]

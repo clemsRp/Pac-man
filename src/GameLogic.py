@@ -6,7 +6,7 @@ from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (SPEED, GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY)
+from .Constants import (GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY, SPEED)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
@@ -21,7 +21,7 @@ class GameLogic(Interface):
                 maze: MazeGenerator,
                 screen_width: int, screen_height: int
             ):
-        global CENTER_X, CENTER_Y, SPEED
+        global CENTER_X, CENTER_Y
 
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
@@ -37,7 +37,7 @@ class GameLogic(Interface):
         self.scale_y = self.scale_x
 
         self.score = 0
-        self.life = 0
+        self.life = 3
 
         self.t_start = 0
 
@@ -205,13 +205,15 @@ class GameLogic(Interface):
                     pos_y = int(
                         (y + 0.5) * self.scale_y
                     )
-                    points.append(
-                        CircleBox(
-                            pos_x,
-                            pos_y,
-                            10
+                    if pos_x != self.player.x or \
+                            pos_y != self.player.y:
+                        points.append(
+                            CircleBox(
+                                pos_x,
+                                pos_y,
+                                10
+                            )
                         )
-                    )
 
         return points
 

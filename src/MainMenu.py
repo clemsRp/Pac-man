@@ -19,7 +19,8 @@ class MainMenu(Interface):
         button_width = 600
         self.background_pacman_speed = 5.0
         self.direction = "right"
-        self.scores = parser.get_scores().get("players", [])
+        self.parser = parser
+        self.scores = self.parser.get_scores().get("players", [])
         self.compute_scores()
         self.last_create_points_time: float = 0.0
         self.time_between_points_creation = 0.1
