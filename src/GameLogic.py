@@ -1,6 +1,6 @@
 import pyray as pr
 import time
-from .Constants import (NORTH, EAST, SOUTH, WEST)
+from .Constants import (INVINCIBILITY, NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .PauseMenu import PauseMenu
@@ -8,7 +8,15 @@ from .Interfaces import Button
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (SPEED, GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY)
+from .Constants import (SPEED,
+                        GAME_LOGIC,
+                        GAME_OVER,
+                        PACMAN_SPRITE_QUALITY,
+                        INVINCIBILITY,
+                        REMOVE_COLLISIONS,
+                        LEVEL_SKIP,
+                        FREEZE_GHOSTS,
+                        BONUS_LIVES)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
@@ -54,7 +62,6 @@ class GameLogic(Interface):
         self.add_button(pause_button)
         self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
         self.paused = False
-
 
         self.score = 0
         self.life = 0
@@ -445,6 +452,7 @@ class GameLogic(Interface):
         future_box_x = self.create_future_box(new_x, base_y)
 
         box_y = int(base_y // self.scale_y)
+
         collision_x = self.check_collision_x(box_y, new_x, future_box_x)
 
         future_box_y = self.create_future_box(ghost.x, new_y)
@@ -532,8 +540,10 @@ class GameLogic(Interface):
         for point in points:
             self.points.remove(point)
 
+        invincibility = self.pause_menu.cheats[INVINCIBILITY]
         for ghost in self.ghosts:
-            if ghost.hitbox.collides_with(self.player.hitbox):
+            if not invincibility \
+                    and ghost.hitbox.collides_with(self.player.hitbox):
                 self.life -= 1
                 self.ghosts[0].x = int(self.scale_x / 2)
                 self.ghosts[0].y = int(self.scale_y / 2)
@@ -558,6 +568,7 @@ class GameLogic(Interface):
                 self.player.try_direction = (0, 0)
 
                 self.t_start = time.time()
+                break
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -664,7 +675,9 @@ class GameLogic(Interface):
             20, pr.RAYWHITE
         )
 
-        for k in range(self.life):
+        bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
+
+        for k in range(self.life + bonus_lives):
             texture = self.assets["pacman"][1]
             scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
 
@@ -684,7 +697,8 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
-        if self.life == -1:
-            return GAME_OVER
+        if self.life + bonus_lives < 0:
+            if not self.paused:
+                return GAME_OVER
 
         return GAME_LOGIC

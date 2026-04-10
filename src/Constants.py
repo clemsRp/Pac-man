@@ -11,6 +11,12 @@ MAIN_MENU = "mainmenu"
 EXIT = "exit"
 PAUSE_MENU = "pausemenu"
 
+INVINCIBILITY = "invincibility"
+REMOVE_COLLISIONS = "remove_collisions"
+LEVEL_SKIP = "level_skip"
+FREEZE_GHOSTS = "freeze_ghosts"
+BONUS_LIVES = "bonus_lives"
+
 DELTA: dict[int, tuple[int, int]] = {
     NORTH: (-1, 0),
     SOUTH: (1, 0),
