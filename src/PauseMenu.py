@@ -1,4 +1,4 @@
-from .Interfaces import Interface, Button, Checkbox
+from .Interfaces import Interface, Button, Checkbox, Spinner
 from .Constants import PAUSE_MENU, GAME_LOGIC
 import pyray as pr
 
@@ -43,24 +43,64 @@ class PauseMenu(Interface):
 
         checkbox_texts = [
             "Invincibility",
+            "Remove collisions",
             "Level skip",
-            "Ghost freeze",
-            "Extra lives",
-            "Remove collisions"
+            "freeze Ghosts",
         ]
-        
+
+        spinner_texts = [
+            "bonus lives"
+        ]
+
         checkbox_size = 50
         start_y = int(self.menu_y + 100)
         box_x = int(self.menu_x + self.menu_width - 100)
-        
+
         for i, text in enumerate(checkbox_texts):
             checkbox_sep_size = checkbox_size + 30
-            cb = Checkbox(box_x, 
-                          start_y + i * checkbox_sep_size, 
-                          checkbox_size, 
-                          text, 
+            cb = Checkbox(box_x,
+                          start_y,
+                          checkbox_size,
+                          text,
                           pr.RAYWHITE)
             self.add_checkbox(cb)
+            start_y += checkbox_sep_size
+
+        spinner_width = 130
+        spinner_height = 50
+        box_x = int(self.menu_x + self.menu_width - spinner_width - 50)
+        for i, text in enumerate(spinner_texts):
+            spinner_sep_size = spinner_height + 30
+            sp = Spinner(box_x,
+                         start_y,
+                         spinner_width,
+                         spinner_height,
+                         text,
+                         0,
+                         100,
+                         0,
+                         pr.RAYWHITE)
+            self.add_spinner(sp)
+            start_y += spinner_sep_size
+
+        # Calculate bounding box for the cheats frame
+        max_cb_width = max(pr.measure_text(t, checkbox_size) for t in checkbox_texts)
+        max_sp_width = max(pr.measure_text(t, spinner_height) for t in spinner_texts)
+
+        cb_left = int(self.menu_x + self.menu_width - 100) - max_cb_width - 10
+        sp_left = int(self.menu_x + self.menu_width - spinner_width - 50) - max_sp_width - 10
+
+        left_edge = min(cb_left, sp_left) - 30
+        right_edge = int(self.menu_x + self.menu_width - 20)
+
+        frame_x = left_edge
+        frame_y = int(self.menu_y + 70)
+        frame_width = right_edge - left_edge
+        frame_height = start_y - frame_y
+
+        self.cheats_frame_rect = pr.Rectangle(frame_x, frame_y, frame_width, frame_height)
+        self.cheats_text_x = frame_x + 20
+        self.cheats_text_y = frame_y - 45
 
     def resume_game(self):
         self.next_state = GAME_LOGIC
@@ -87,6 +127,10 @@ class PauseMenu(Interface):
             4,
             self.menu_border_color
         )
+
+        # Draw cheats frame and "Cheats" text
+        pr.draw_rectangle_lines_ex(self.cheats_frame_rect, 3, pr.RAYWHITE)
+        pr.draw_text("Cheats", int(self.cheats_text_x), int(self.cheats_text_y), 40, pr.RAYWHITE)
 
     def update(self) -> str:
         self.draw_background_color()

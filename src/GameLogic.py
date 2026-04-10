@@ -37,7 +37,7 @@ class GameLogic(Interface):
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
-        
+
         buttons_width = 300
         buttons_height = 50
         window_offset = 40
