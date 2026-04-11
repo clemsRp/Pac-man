@@ -20,6 +20,9 @@ if __name__ == "__main__":
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
 
+        """ window_width = 800
+        window_height = 600 """
+
         game_manager.set_window_size(window_width,
                                      window_height)
         pr.set_window_position(0, 0)
@@ -42,7 +45,7 @@ if __name__ == "__main__":
                                    main_menu)
         game_manager.add_interface("gameover",
                                    game_over)
-        game_manager.set_state("gameover")
+        game_manager.set_state("mainmenu")
 
         game_logic.set_assets(game_manager.assets)
         game_over.set_assets(game_manager.assets)

@@ -22,6 +22,10 @@ class GameManager:
         self.maze: MazeGenerator = maze
         self.parser: Parser = parser
         self.config_file: str = config_file
+        self.window_width: int = 0
+        self.window_height: int = 0
+        self.scale_x: int = 0
+        self.scale_y: int = 0
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
         self.maze_width: int = len(self.grid[0])
@@ -83,11 +87,17 @@ class GameManager:
 
         monitor = pr.get_current_monitor()
 
-        window_width = pr.get_monitor_width(monitor)
-        window_height = pr.get_monitor_height(monitor) - 100
+        self.window_width = pr.get_monitor_width(monitor)
+        self.window_height = pr.get_monitor_height(monitor) - 100
+
+        self.scale_x: float = self.window_width / self.maze_width
+        self.scale_y: float = self.window_height / self.maze_height
+        self.scale_x = min([self.scale_x, self.scale_y])
+        self.scale_x -= self.scale_x % 2
+        self.scale_y = self.scale_x
 
         self.load_assets()
-        return window_width, window_height
+        return self.window_width, self.window_height
 
     def set_window_size(self, width: int, height: int) -> None:
         pr.set_window_size(width, height)
@@ -131,8 +141,8 @@ class GameManager:
         for f in files:
             image = pr.load_image(paths["ghosts"] + f)
             pr.image_resize(image,
-                            64,
-                            64)
+                            int(self.scale_x),
+                            int(self.scale_y))
             self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
 
         skull = pr.load_image("assets/other/skull.png")
