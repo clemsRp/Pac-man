@@ -6,10 +6,14 @@ from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY, SPEED)
+from .Constants import (
+    GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY,
+    GHOST_SPRITE_QUALITY, SPEED
+)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
+
 
 CENTER_X = 0
 CENTER_Y = 0
@@ -618,10 +622,25 @@ class GameLogic(Interface):
 
     def draw_ghosts(self):
         for ghost in self.ghosts:
-            pr.draw_texture(
-                ghost.ghost,
-                int(ghost.x - 0.35 * self.scale_x + CENTER_X),
-                int(ghost.y - 0.35 * self.scale_y + CENTER_Y),
+            texture = ghost.ghost
+
+            # même logique que pacman
+            scale = self.player.radius / (GHOST_SPRITE_QUALITY / 2)
+
+            pr.draw_texture_pro(
+                texture,
+                pr.Rectangle(0, 0, texture.width, texture.height),
+                pr.Rectangle(
+                    ghost.x + CENTER_X,
+                    ghost.y + CENTER_Y,
+                    texture.width * scale,
+                    texture.height * scale
+                ),
+                pr.Vector2(
+                    (texture.width * scale) / 2.0,
+                    (texture.height * scale) / 2.0
+                ),
+                0,
                 pr.WHITE
             )
 

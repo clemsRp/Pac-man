@@ -20,8 +20,8 @@ if __name__ == "__main__":
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
 
-        """ window_width = 800
-        window_height = 600 """
+        window_width = 800
+        window_height = 600
 
         game_manager.set_window_size(window_width,
                                      window_height)
