@@ -1,6 +1,6 @@
 import pyray as pr
 import time
-from .Constants import (INVINCIBILITY, NORTH, EAST, SOUTH, WEST)
+from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .PauseMenu import PauseMenu
@@ -14,8 +14,6 @@ from .Constants import (SPEED,
                         PACMAN_SPRITE_QUALITY,
                         INVINCIBILITY,
                         REMOVE_COLLISIONS,
-                        LEVEL_SKIP,
-                        FREEZE_GHOSTS,
                         BONUS_LIVES)
 
 WALL_WIDTH = 3
@@ -108,6 +106,7 @@ class GameLogic(Interface):
         )
 
         self.ghosts = []
+        self.remove_collisions_active = False
 
         self.points = self.create_points()
 
@@ -116,6 +115,51 @@ class GameLogic(Interface):
 
     def resume_game(self):
         self.paused = False
+
+    def get_nearest_walkable_cell_center(
+        self,
+        x: float,
+        y: float,
+    ) -> tuple[int, int]:
+        """get the position of the nearest
+        walkable cell center to the given position"""
+        best_x = int(x)
+        best_y = int(y)
+        best_distance = None
+
+        for cell_y in range(self.maze_height):
+            for cell_x in range(self.maze_width):
+                if self.grid[cell_y][cell_x] == 15:
+                    continue
+
+                center_x = int((cell_x + 0.5) * self.scale_x)
+                center_y = int((cell_y + 0.5) * self.scale_y)
+                distance = (center_x - x) ** 2 + (center_y - y) ** 2
+
+                if best_distance is None or distance < best_distance:
+                    best_distance = distance
+                    best_x = center_x
+                    best_y = center_y
+
+        return best_x, best_y
+
+    def sync_remove_collisions_state(self) -> None:
+        """sync the playerposition with the nearest
+        walkable cell after the remove_collisions cheat is disabled"""
+        remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
+        # means that we just disabled remove collisions
+        if self.remove_collisions_active and not remove_collisions:
+            safe_x, safe_y = self.get_nearest_walkable_cell_center(
+                self.player.x,
+                self.player.y,
+            )
+            self.player.x = safe_x
+            self.player.y = safe_y
+            self.player.direction = (0, 0)
+            self.player.try_direction = (0, 0)
+            self.player.update_collision_box()
+
+        self.remove_collisions_active = remove_collisions
 
     def set_assets(self, assets: dict):
         super().set_assets(assets)
@@ -402,7 +446,8 @@ class GameLogic(Interface):
     def collision_events(
         self,
         new_x: float, new_y: float,
-        ghost: Ghost | None = None
+        ghost: Ghost | None = None,
+        ignore_collisions: bool = False
     ):
         if ghost is None:
             ghost = self.player
@@ -413,6 +458,12 @@ class GameLogic(Interface):
         maze_pixels_y = self.maze_height * self.scale_y
         new_x = max(0, min(new_x, maze_pixels_x - 1))
         new_y = max(0, min(new_y, maze_pixels_y - 1))
+
+        if ignore_collisions:
+            ghost.x = new_x
+            ghost.y = new_y
+            ghost.update_collision_box()
+            return
 
         future_box_x = self.create_future_box(new_x, base_y)
 
@@ -463,15 +514,26 @@ class GameLogic(Interface):
         return not collision_x and not collision_y
 
     def handle_events(self):
-        """ Handle player input and ghost movement, check for collisions and update score/life"""
+        """Handle player input and ghost movement, then update score/life."""
+        remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
+        # usefull if the player is in a wall
+        ghost_target_x = self.player.x
+        ghost_target_y = self.player.y
+        if remove_collisions:
+            ghost_target_x, ghost_target_y = (
+                self.get_nearest_walkable_cell_center(
+                    self.player.x,
+                    self.player.y,
+                )
+            )
         # Ghosts
         if time.time() - self.t_start < 3:
             return
         for ghost in self.ghosts:
             ghost.move(
                 self.grid,
-                int(self.player.x),
-                int(self.player.y),
+                int(ghost_target_x),
+                int(ghost_target_y),
                 int(self.scale_x),
                 int(self.scale_y)
             )
@@ -497,28 +559,28 @@ class GameLogic(Interface):
         # Player
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.player.try_direction = (SPEED, 0)
-            if self.can_move_direction(SPEED, 0):
+            if remove_collisions or self.can_move_direction(SPEED, 0):
                 self.player.direction = (SPEED, 0)
 
         if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
             self.player.try_direction = (-SPEED, 0)
-            if self.can_move_direction(-SPEED, 0):
+            if remove_collisions or self.can_move_direction(-SPEED, 0):
                 self.player.direction = (-SPEED, 0)
 
         if pr.is_key_down(pr.KeyboardKey.KEY_UP):
             self.player.try_direction = (0, -SPEED)
-            if self.can_move_direction(0, -SPEED):
+            if remove_collisions or self.can_move_direction(0, -SPEED):
                 self.player.direction = (0, -SPEED)
 
         if pr.is_key_down(pr.KeyboardKey.KEY_DOWN):
             self.player.try_direction = (0, SPEED)
-            if self.can_move_direction(0, SPEED):
+            if remove_collisions or self.can_move_direction(0, SPEED):
                 self.player.direction = (0, SPEED)
 
         add_x = self.player.direction[0]
         add_y = self.player.direction[1]
 
-        if self.can_move_direction(
+        if remove_collisions or self.can_move_direction(
             self.player.try_direction[0],
             self.player.try_direction[1]
         ):
@@ -528,7 +590,8 @@ class GameLogic(Interface):
 
         self.collision_events(
             self.player.x + add_x,
-            self.player.y + add_y
+            self.player.y + add_y,
+            ignore_collisions=remove_collisions
         )
 
         points = []
@@ -540,35 +603,44 @@ class GameLogic(Interface):
         for point in points:
             self.points.remove(point)
 
-        invincibility = self.pause_menu.cheats[INVINCIBILITY]
-        for ghost in self.ghosts:
-            if not invincibility \
-                    and ghost.hitbox.collides_with(self.player.hitbox):
-                self.life -= 1
-                self.ghosts[0].x = int(self.scale_x / 2)
-                self.ghosts[0].y = int(self.scale_y / 2)
+        if not remove_collisions:
+            invincibility = self.pause_menu.cheats[INVINCIBILITY]
+            for ghost in self.ghosts:
+                if not invincibility \
+                        and ghost.hitbox.collides_with(self.player.hitbox):
+                    self.life -= 1
+                    self.ghosts[0].x = int(self.scale_x / 2)
+                    self.ghosts[0].y = int(self.scale_y / 2)
 
-                self.ghosts[1].x = int(self.scale_x / 2)
-                self.ghosts[1].y = int((self.maze_height - 0.5) * self.scale_y)
+                    self.ghosts[1].x = int(self.scale_x / 2)
+                    self.ghosts[1].y = int(
+                        (self.maze_height - 0.5) * self.scale_y
+                    )
 
-                self.ghosts[2].x = int((self.maze_width - 0.5) * self.scale_x)
-                self.ghosts[2].y = int(self.scale_y / 2)
+                    self.ghosts[2].x = int(
+                        (self.maze_width - 0.5) * self.scale_x
+                    )
+                    self.ghosts[2].y = int(self.scale_y / 2)
 
-                self.ghosts[3].x = int((self.maze_width - 0.5) * self.scale_x)
-                self.ghosts[3].y = int((self.maze_height - 0.5) * self.scale_y)
+                    self.ghosts[3].x = int(
+                        (self.maze_width - 0.5) * self.scale_x
+                    )
+                    self.ghosts[3].y = int(
+                        (self.maze_height - 0.5) * self.scale_y
+                    )
 
-                is_pair = (self.maze_width % 2 + 1) % 2
-                self.player.x = int(
+                    is_pair = (self.maze_width % 2 + 1) % 2
+                    self.player.x = int(
                         (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
                     )
-                self.player.y = int(
+                    self.player.y = int(
                         (0.5 + self.maze_height // 2) * self.scale_y
                     )
-                self.player.direction = (0, 0)
-                self.player.try_direction = (0, 0)
+                    self.player.direction = (0, 0)
+                    self.player.try_direction = (0, 0)
 
-                self.t_start = time.time()
-                break
+                    self.t_start = time.time()
+                    break
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -660,6 +732,7 @@ class GameLogic(Interface):
 
         if self.paused:
             pause_menu_result: str = self.pause_menu.update()
+            self.sync_remove_collisions_state()
             if pause_menu_result == GAME_LOGIC:
                 self.resume_game()
 

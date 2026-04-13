@@ -1,5 +1,5 @@
 from .Interfaces import Interface, Button, Checkbox, Spinner
-from .Constants import (INVINCIBILITY, PAUSE_MENU,
+from .Constants import (PAUSE_MENU,
                         GAME_LOGIC,
                         INVINCIBILITY,
                         REMOVE_COLLISIONS,
@@ -103,7 +103,10 @@ class PauseMenu(Interface):
                            in spinner_texts)
 
         cb_left = int(self.menu_x + self.menu_width - 100) - max_cb_width - 10
-        sp_left = int(self.menu_x + self.menu_width - spinner_width - 50) - max_sp_width - 10
+        sp_left = (
+            int(self.menu_x + self.menu_width - spinner_width - 50)
+            - max_sp_width - 10
+        )
 
         left_edge = min(cb_left, sp_left) - 30
         right_edge = int(self.menu_x + self.menu_width - 20)
@@ -167,10 +170,7 @@ class PauseMenu(Interface):
     def update_cheats(self):
         for cheat_name, gui_element in self.cheats_gui.items():
             if isinstance(gui_element, Checkbox):
-                if cheat_name == REMOVE_COLLISIONS:
-                    self.cheats[cheat_name] = not gui_element.checked
-                else:
-                    self.cheats[cheat_name] = gui_element.checked
+                self.cheats[cheat_name] = gui_element.checked
             elif isinstance(gui_element, Spinner):
                 self.cheats[cheat_name] = gui_element.value
 
