@@ -27,7 +27,7 @@ class GameOver(Interface):
 
         self.state = GAME_OVER
 
-        self.score = 4242
+        self.score = 0
         self.pseudo = ""
 
         self.screen_width = screen_width

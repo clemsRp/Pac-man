@@ -53,6 +53,7 @@ class MainMenu(Interface):
         self.add_button(exit_button)
 
     def compute_scores(self) -> None:
+        self.scores = self.parser.get_scores().get("players", [])
         self.scores = sorted(self.scores,
                              key=lambda x: x["score"],
                              reverse=True)
@@ -231,7 +232,10 @@ class MainMenu(Interface):
                 " HIGH SCORES ", font_size + 20
             )
         ])
-        scores_menu_height = int(0.5 * self.window_height)
+        scores_menu_height = int(
+            0.12 * self.window_height + 100 +
+            47 * len(self.scores[:MAX_SCORES_SHOWN])
+        )
         menu_x = (self.window_width * 2 // 3)
         menu_y = int(
             (self.window_height - scores_menu_height) / 2
@@ -267,7 +271,13 @@ class MainMenu(Interface):
 
         y_offset = menu_y + 80
 
-        for i, player in enumerate(self.scores[:MAX_SCORES_SHOWN]):
+        for i, player in enumerate(
+            sorted(
+                self.scores[:MAX_SCORES_SHOWN],
+                key=lambda dico: dico["score"],
+                reverse=True
+            )
+        ):
             pseudo = player["pseudo"]
             score = player["score"]
 
@@ -284,7 +294,9 @@ class MainMenu(Interface):
 
         #  best player section
 
-        separator_y = menu_y + scores_menu_height - 130
+        separator_y = int(
+            menu_y + scores_menu_height - 100
+        )
         pr.draw_line(
             menu_x -
             20,
