@@ -225,7 +225,12 @@ class MainMenu(Interface):
             self.window_height
         ]))
 
-        scores_menu_width = int(0.2 * self.window_width)
+        scores_menu_width = max([
+            int(0.2 * self.window_width),
+            pr.measure_text(
+                " HIGH SCORES ", font_size + 20
+            )
+        ])
         scores_menu_height = int(0.5 * self.window_height)
         menu_x = (self.window_width * 2 // 3)
         menu_y = int(

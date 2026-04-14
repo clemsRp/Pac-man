@@ -57,29 +57,28 @@ class GameManager:
             if interface_result == EXIT:
                 break
 
-            state = False
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
-                state = True
+                self.interfaces[interface_result].life = 3
+                self.interfaces[self.state].t_start = time.time()
+
+            if self.state != GAME_OVER and interface_result == GAME_OVER:
+                self.interfaces[interface_result].state = GAME_OVER
 
             if self.state != MAIN_MENU and interface_result == MAIN_MENU:
+                self.interfaces[interface_result].next_state = MAIN_MENU
                 self.parser.parse_config(self.config_file)
                 self.interfaces[interface_result].scores = (
                     self.parser.get_scores().get("players", [])
                 )
 
-            if self.state != GAME_OVER and interface_result == GAME_OVER:
-                self.interfaces["gameover"].state = GAME_OVER
             if interface_result != self.state:
                 self.state = interface_result
-
-            if state:
-                self.interfaces[self.state].t_start = time.time()
 
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
         # pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
-        pr.set_window_min_size(100, 100)
+        pr.set_window_min_size(800, 600)
 
         pr.init_window(width, height, "Pac-Man")
         pr.gui_load_style("pacman_style.rgs")

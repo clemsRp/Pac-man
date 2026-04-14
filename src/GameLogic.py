@@ -41,7 +41,7 @@ class GameLogic(Interface):
         self.scale_y = self.scale_x
 
         self.score = 0
-        self.life = 3
+        self.life = 0
 
         self.t_start = 0
 
