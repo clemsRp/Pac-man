@@ -1,5 +1,6 @@
 import pyray as pr
 import time
+import numpy as np
 from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
@@ -16,6 +17,7 @@ from .Constants import (SPEED,
                         REMOVE_COLLISIONS,
                         BONUS_LIVES)
 
+from .ray_tracing import trace_rays_numba, pack_lightmap_rgba
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
 
@@ -105,9 +107,10 @@ class GameLogic(Interface):
             hitbox_h
         )
 
-        self.ghosts = []
+        self.ghosts: list[Ghost] = []
         self.remove_collisions_active = False
-
+        self._init_raytracing()
+        self._init_texture()
         self.points = self.create_points()
 
     def pause_action(self):
@@ -270,6 +273,70 @@ class GameLogic(Interface):
                     )
 
         return boxes
+
+    def _build_wallmap(self) -> np.ndarray:
+        """Précalcule un array booléen
+           (H_px, W_px) : True = pixel dans un mur."""
+        cell_w, cell_h = self.get_cell_pixel_size()
+        H = self.maze_height * cell_h
+        W = self.maze_width * cell_w
+        wall = np.zeros((H, W), dtype=bool)
+
+        for cy in range(self.maze_height):
+            for cx in range(self.maze_width):
+                cell = self.grid[cy][cx]
+                x0 = cx * cell_w
+                y0 = cy * cell_h
+                x1 = x0 + cell_w
+                y1 = y0 + cell_h
+
+                if cell == 15:
+                    wall[y0:y1, x0:x1] = True
+                    continue
+                if cell & NORTH:
+                    wall[y0:y0 + WALL_WIDTH, x0:x1] = True
+                if cell & SOUTH:
+                    wall[y1 - WALL_WIDTH:y1, x0:x1] = True
+                if cell & EAST:
+                    wall[y0:y1, x1 - WALL_WIDTH:x1] = True
+                if cell & WEST:
+                    wall[y0:y1, x0:x0 + WALL_WIDTH] = True
+
+            # Coins
+            for cx in range(1, self.maze_width):
+                c = self.grid[cy][cx]
+                w_ = self.grid[cy][cx - 1]
+                x0 = cx * cell_w
+                y0 = cy * cell_h
+                if cy > 0:
+                    n = self.grid[cy - 1][cx]
+                    nw = self.grid[cy - 1][cx - 1]
+                    if c & NORTH and c & WEST:
+                        wall[y0 - WALL_WIDTH:y0, x0 - WALL_WIDTH:x0] = True
+                    if n & SOUTH and n & WEST:
+                        wall[y0:y0 + WALL_WIDTH, x0 - WALL_WIDTH:x0] = True
+                    if w_ & NORTH and w_ & EAST:
+                        wall[y0 - WALL_WIDTH:y0, x0:x0 + WALL_WIDTH] = True
+                    if nw & SOUTH and nw & EAST:
+                        wall[y0:y0 + WALL_WIDTH, x0:x0 + WALL_WIDTH] = True
+
+        return wall
+
+    def _init_raytracing(self):
+        """initializes the ray tracing by creating the wallmap and lightmap"""
+        self.lightmap_scale = 4
+        cell_w = int(self.scale_x)
+        cell_h = int(self.scale_y)
+        H = (self.maze_height * cell_h) // self.lightmap_scale
+        W = (self.maze_width * cell_w) // self.lightmap_scale
+        self._wallmap = np.ascontiguousarray(self._build_wallmap())
+        self._lightmap = np.ascontiguousarray(np.zeros((H, W, 3),
+                                                       dtype=np.float32))
+
+        # Pre-allocate rgba mapping to avoid costly concatenations each frame
+        self._rgba_lightmap = np.zeros((H, W, 4), dtype=np.uint8)
+        # Alpha channel is always fully opaque.
+        self._rgba_lightmap[:, :, 3] = 255
 
     def create_points(self) -> list:
         points = []
@@ -712,6 +779,38 @@ class GameLogic(Interface):
                           int(self.player.box.height),
                           pr.WHITE) """
 
+    def _init_texture(self):
+        width, height = self._lightmap.shape[1], self._lightmap.shape[0]
+
+        img = pr.gen_image_color(width, height, pr.BLACK)
+        self.light_texture = pr.load_texture_from_image(img)
+
+        pr.unload_image(img)
+
+    def update_light_texture(self):
+        # Update pre-allocated RGBA array in-place.
+        # Numba makes this conversion cheap enough for each frame.
+        pack_lightmap_rgba(self._lightmap, self._rgba_lightmap)
+
+        data_ptr = pr.ffi.cast("void *", self._rgba_lightmap.ctypes.data)
+        pr.update_texture(self.light_texture, data_ptr)
+
+    def draw_lighting(self):
+        pr.begin_blend_mode(pr.BlendMode.BLEND_ADDITIVE)
+        pr.draw_texture_ex(
+            self.light_texture,
+            pr.Vector2(float(CENTER_X), float(CENTER_Y)),
+            0.0,
+            float(self.lightmap_scale),
+            pr.WHITE
+        )
+        pr.end_blend_mode()
+
+    def draw_floor(self):
+        maze_w = int(self.maze_width * self.scale_x)
+        maze_h = int(self.maze_height * self.scale_y)
+        pr.draw_rectangle(CENTER_X, CENTER_Y, maze_w, maze_h, pr.BLACK)
+
     def draw_ghosts(self):
         for ghost in self.ghosts:
             pr.draw_texture(
@@ -721,11 +820,45 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
+    def get_cell_pixel_size(self) -> tuple[int, int]:
+        return int(self.scale_x), int(self.scale_y)
+
+    def ray_trace(self) -> None:
+        """ray tracing and update the lightmap
+        calls the numba function to do the ray tracing calculations
+        because it's faster than doing it in python"""
+
+        light_x = max(
+            0.0,
+            min(self.player.x, self._wallmap.shape[1] - 1.0),
+        )
+        light_y = max(
+            0.0,
+            min(self.player.y, self._wallmap.shape[0] - 1.0),
+        )
+
+        trace_rays_numba(
+            self._wallmap,
+            self._lightmap,
+            light_x,
+            light_y,
+            self.lightmap_scale,
+            200,                # NB_RAYS
+            0.98, 0.7, 0.01,   # energy_decay, bounce_decay, min_energy
+        )
+        self.update_light_texture()
+
     def update(self) -> str:
         super().update()
-        self.draw_maze()
         if not self.paused:
             self.handle_events()
+
+        self.ray_trace()
+
+        self.draw_floor()
+        self.draw_lighting()
+        self.draw_maze()
+
         self.draw_points()
         self.draw_player()
         self.draw_ghosts()

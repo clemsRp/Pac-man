@@ -49,7 +49,7 @@ class GameManager:
                 state = True
 
             if interface_result != self.state:
-                self.state = interface_result
+                self.set_state(interface_result)
 
             if state:
                 self.interfaces[self.state].t_start = time.time()
