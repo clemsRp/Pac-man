@@ -16,7 +16,6 @@ class MainMenu(Interface):
         super().__init__()
         self.window_width = window_width
         self.window_height = window_height
-        button_width = 600
         self.background_pacman_speed = 5.0
         self.direction = "right"
         self.parser = parser
@@ -24,19 +23,20 @@ class MainMenu(Interface):
         self.compute_scores()
         self.last_create_points_time: float = 0.0
         self.time_between_points_creation = 0.1
-        button_height = 120
+        button_width = int(0.25 * self.window_width)
+        button_height = int(0.1 * self.window_height)
 
         center_x = (self.window_width - button_width) // 2
         center_y = (self.window_height - button_height) // 2
         start_button = Button(center_x,
-                              center_y,
+                              int(center_y - button_height / 2),
                               button_width, button_height,
                               "Start Game",
                               pr.GREEN,
                               self.start_game)
 
         exit_button = Button(center_x,
-                             center_y + button_height + 10,
+                             int(center_y + button_height / 2 + 10),
                              button_width, button_height,
                              "Exit",
                              pr.RED,
@@ -220,10 +220,17 @@ class MainMenu(Interface):
         if len(self.scores) == 0:
             return
 
-        scores_menu_width = 500
-        scores_menu_height = 700
-        menu_x = (self.window_width * 2 // 3) - (scores_menu_width // 2)
-        menu_y = (self.window_height // 2) - 250
+        font_size: int = int(0.025 * min([
+            self.window_width,
+            self.window_height
+        ]))
+
+        scores_menu_width = int(0.2 * self.window_width)
+        scores_menu_height = int(0.5 * self.window_height)
+        menu_x = (self.window_width * 2 // 3)
+        menu_y = int(
+            (self.window_height - scores_menu_height) / 2
+        )
 
         pr.draw_rectangle(
             menu_x - 20,
@@ -240,7 +247,18 @@ class MainMenu(Interface):
             scores_menu_height,
             pr.GOLD)
 
-        pr.draw_text("HIGH SCORES", menu_x + 60, menu_y, 50, pr.GOLD)
+        add_x: int = int(
+            (
+                scores_menu_width - pr.measure_text(
+                    "HIGH SCORES", font_size + 20
+                )
+            ) / 2
+        )
+
+        pr.draw_text(
+            "HIGH SCORES", menu_x + add_x, menu_y,
+            font_size + 20, pr.GOLD
+        )
 
         y_offset = menu_y + 80
 
@@ -248,9 +266,14 @@ class MainMenu(Interface):
             pseudo = player["pseudo"]
             score = player["score"]
 
-            pr.draw_text(f"{i + 1}. {pseudo}", menu_x, y_offset, 40, pr.WHITE)
-            pr.draw_text(f"{score}", menu_x + 320, y_offset,
-                         40, pr.YELLOW)
+            del_x: int = scores_menu_width - pr.measure_text(
+                f"{score}", font_size + 10
+            )
+
+            pr.draw_text(f"{i + 1}. {pseudo}", menu_x, y_offset,
+                         font_size + 10, pr.WHITE)
+            pr.draw_text(f"{score}", menu_x + del_x, y_offset,
+                         font_size + 10, pr.YELLOW)
 
             y_offset += 45
 
@@ -271,12 +294,18 @@ class MainMenu(Interface):
             "Best Player :",
             menu_x,
             separator_y + 10,
-            30,
+            font_size,
             pr.ORANGE)
+
+        del_x = scores_menu_width - pr.measure_text(
+            f"{self.best_player_score}", font_size + 10
+        )
+
         pr.draw_text(f"{self.best_player_name}", menu_x,
-                     separator_y + 40, 40, pr.WHITE)
+                     separator_y + font_size + 10, font_size + 10, pr.WHITE)
         pr.draw_text(f"{self.best_player_score}", menu_x +
-                     320, separator_y + 40, 40, pr.YELLOW)
+                     del_x, separator_y + font_size + 10,
+                     font_size + 10, pr.YELLOW)
 
     def exit_game(self):
         self.next_state = EXIT

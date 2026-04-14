@@ -41,10 +41,16 @@ class GameOver(Interface):
         self.last_key_time: float = 0
         self.cursor: bool = False
 
-        btn_width: int = int(0.05 * self.screen_width)
+        input_width: int = max([
+            int(0.1 * self.screen_width),
+            int(pr.measure_text(
+                " " * 18, FONT_SIZE
+            ))
+        ])
+        btn_width: int = int(input_width / 2)
 
         save_button: Button = Button(
-            int(0.45 * self.screen_width),
+            int(0.5 * (self.screen_width - input_width / 2)),
             int(2 / 3 * self.screen_height + 2.2 * FONT_SIZE),
             btn_width - 5,
             2 * FONT_SIZE,
@@ -179,18 +185,25 @@ class GameOver(Interface):
 
         border: int = 7
 
-        pr.draw_rectangle(
-            int(0.45 * self.screen_width),
-            int(2 / 3 * self.screen_height),
+        input_width: int = max([
             int(0.1 * self.screen_width),
+            int(pr.measure_text(
+                " " * 18, FONT_SIZE
+            ))
+        ])
+
+        pr.draw_rectangle(
+            int(0.5 * (self.screen_width - input_width)),
+            int(2 / 3 * self.screen_height),
+            input_width,
             2 * FONT_SIZE,
             pr.RED
         )
 
         pr.draw_rectangle(
-            int(0.45 * self.screen_width + border),
+            int(0.5 * (self.screen_width - input_width) + border),
             int(2 / 3 * self.screen_height + border),
-            int(0.1 * self.screen_width - 2 * border),
+            input_width - 2 * border,
             2 * (FONT_SIZE - border),
             pr.WHITE
         )
