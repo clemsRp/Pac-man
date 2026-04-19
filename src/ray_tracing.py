@@ -52,9 +52,15 @@ def trace_rays_numba(wallmap: np.ndarray, lightmap: np.ndarray,
                     # linear falloff: 1.0 at the center, 0.0 at the radius
                     falloff = 1.0 - (step / radius)
     
-                    lightmap[lightmap_y, lightmap_x, 0] += color_r * falloff * lightmap_scale
-                    lightmap[lightmap_y, lightmap_x, 1] += color_g * falloff * lightmap_scale
-                    lightmap[lightmap_y, lightmap_x, 2] += color_b * falloff * lightmap_scale
+                    val_r = color_r * falloff
+                    val_g = color_g * falloff
+                    val_b = color_b * falloff
+                    
+                    # Rays overlap! To avoid saturating to white, we take the maximum value
+                    if val_r > lightmap[lightmap_y, lightmap_x, 0]:
+                        lightmap[lightmap_y, lightmap_x, 0] = val_r
+                        lightmap[lightmap_y, lightmap_x, 1] = val_g
+                        lightmap[lightmap_y, lightmap_x, 2] = val_b
                     
                     prev_lightmap_x = lightmap_x
                     prev_lightmap_y = lightmap_y
