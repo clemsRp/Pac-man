@@ -843,8 +843,8 @@ class GameLogic(Interface):
             light_x,
             light_y,
             self.lightmap_scale,
-            200,                # NB_RAYS
-            0.98, 0.7, 0.01,   # energy_decay, bounce_decay, min_energy
+            140,
+            180, 180, 180,
         )
         self.update_light_texture()
 

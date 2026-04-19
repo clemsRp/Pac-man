@@ -1,4 +1,4 @@
-from numba import njit
+from numba import njit, prange
 import numpy as np
 
 
@@ -6,24 +6,31 @@ import numpy as np
 def trace_rays_numba(wallmap: np.ndarray, lightmap: np.ndarray,
                      light_x: float, light_y: float,
                      lightmap_scale: int,
-                     nb_rays: int, energy_decay: float,
-                     bounce_decay: float, min_energy: float):
+                     radius: float,
+                     color_r: float, color_g: float, color_b: float):
+
     H, W = wallmap.shape
     LH, LW = lightmap.shape[0], lightmap.shape[1]
+
     lightmap[:] = 0.0
+
+    # The number of rays adapts automatically to the radius
+    # to avoid gaps.
+    nb_rays = int(2.0 * np.pi * radius) + 1
     two_pi = 2.0 * np.pi
 
     for ray_id in range(nb_rays):
         px = light_x
         py = light_y
-        # Uses 3 floats for RGB energy.
-        e0, e1, e2 = 255.0, 255.0, 255.0
+        
+        prev_lightmap_x = -1
+        prev_lightmap_y = -1
 
         angle = two_pi * (ray_id / nb_rays)
         dx = np.cos(angle)
         dy = np.sin(angle)
 
-        while (e0 > min_energy or e1 > min_energy or e2 > min_energy):
+        for step in range(int(radius)):
             new_x = px + dx
             new_y = py + dy
 
@@ -34,50 +41,34 @@ def trace_rays_numba(wallmap: np.ndarray, lightmap: np.ndarray,
                 break
 
             if wallmap[wall_y, wall_x]:
-                vertical_hit = wallmap[int(py), wall_x]
-                horizontal_hit = wallmap[wall_y, int(px)]
-                if vertical_hit and not horizontal_hit:
-                    dx *= -1.0
-                elif horizontal_hit and not vertical_hit:
-                    dy *= -1.0
-                else:
-                    dx *= -1.0
-                    dy *= -1.0
-                e0 *= bounce_decay
-                e1 *= bounce_decay
-                e2 *= bounce_decay
-                continue
+                break
 
             px, py = new_x, new_y
             lightmap_x = wall_x // lightmap_scale
             lightmap_y = wall_y // lightmap_scale
 
             if 0 <= lightmap_y < LH and 0 <= lightmap_x < LW:
-                lightmap[lightmap_y, lightmap_x, 0] += e0
-                lightmap[lightmap_y, lightmap_x, 1] += e1
-                lightmap[lightmap_y, lightmap_x, 2] += e2
+                if lightmap_x != prev_lightmap_x or lightmap_y != prev_lightmap_y:
+                    # linear falloff: 1.0 at the center, 0.0 at the radius
+                    falloff = 1.0 - (step / radius)
+    
+                    lightmap[lightmap_y, lightmap_x, 0] += color_r * falloff * lightmap_scale
+                    lightmap[lightmap_y, lightmap_x, 1] += color_g * falloff * lightmap_scale
+                    lightmap[lightmap_y, lightmap_x, 2] += color_b * falloff * lightmap_scale
+                    
+                    prev_lightmap_x = lightmap_x
+                    prev_lightmap_y = lightmap_y
 
-            e0 *= energy_decay
-            e1 *= energy_decay
-            e2 *= energy_decay
 
-
-@njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=True, parallel=True)
 def pack_lightmap_rgba(lightmap: np.ndarray, rgba_map: np.ndarray):
     H, W = lightmap.shape[0], lightmap.shape[1]
-    for y in range(H):
+    for y in prange(H):
         for x in range(W):
             v0 = lightmap[y, x, 0]
             v1 = lightmap[y, x, 1]
             v2 = lightmap[y, x, 2]
 
-            if v0 > 255.0:
-                v0 = 255.0
-            if v1 > 255.0:
-                v1 = 255.0
-            if v2 > 255.0:
-                v2 = 255.0
-
-            rgba_map[y, x, 0] = int(v0)
-            rgba_map[y, x, 1] = int(v1)
-            rgba_map[y, x, 2] = int(v2)
+            rgba_map[y, x, 0] = int(v0) if v0 < 255.0 else 255
+            rgba_map[y, x, 1] = int(v1) if v1 < 255.0 else 255
+            rgba_map[y, x, 2] = int(v2) if v2 < 255.0 else 255
