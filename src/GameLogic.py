@@ -9,15 +9,8 @@ from .Interfaces import Button
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (SPEED,
-                        GAME_LOGIC,
-                        GAME_OVER,
-                        PACMAN_SPRITE_QUALITY,
-                        INVINCIBILITY,
-                        REMOVE_COLLISIONS,
-                        BONUS_LIVES)
+from .Constants import *
 
-from .ray_tracing import trace_rays_numba, pack_lightmap_rgba
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
 
@@ -110,7 +103,6 @@ class GameLogic(Interface):
         self.ghosts: list[Ghost] = []
         self.remove_collisions_active = False
         self._init_raytracing()
-        self._init_texture()
         self.points = self.create_points()
 
     def pause_action(self):
@@ -323,20 +315,25 @@ class GameLogic(Interface):
         return wall
 
     def _init_raytracing(self):
-        """initializes the ray tracing by creating the wallmap and lightmap"""
-        self.lightmap_scale = 4
-        cell_w = int(self.scale_x)
-        cell_h = int(self.scale_y)
-        H = (self.maze_height * cell_h) // self.lightmap_scale
-        W = (self.maze_width * cell_w) // self.lightmap_scale
+        """initializes GPU ray tracing by creating wallmap texture"""
         self._wallmap = np.ascontiguousarray(self._build_wallmap())
-        self._lightmap = np.ascontiguousarray(np.zeros((H, W, 3),
-                                                       dtype=np.float32))
-
-        # Pre-allocate rgba mapping to avoid costly concatenations each frame
-        self._rgba_lightmap = np.zeros((H, W, 4), dtype=np.uint8)
-        # Alpha channel is always fully opaque.
-        self._rgba_lightmap[:, :, 3] = 255
+        height, width = self._wallmap.shape
+        
+        wallmap_rgba = np.zeros((height, width, 4), dtype=np.uint8)
+        wallmap_rgba[self._wallmap] = [255, 255, 255, 255]
+        
+        img = pr.gen_image_color(width, height, pr.BLANK)
+        self.wallmap_texture = pr.load_texture_from_image(img)
+        pr.unload_image(img)
+        
+        data_ptr = pr.ffi.cast("void *", wallmap_rgba.ctypes.data)
+        pr.update_texture(self.wallmap_texture, data_ptr)
+        
+        self.shader = pr.load_shader("", "src/lighting.fs")
+        self.maze_size_loc = pr.get_shader_location(self.shader, "mazeSize")
+        self.light_pos_loc = pr.get_shader_location(self.shader, "lightPos")
+        self.radius_loc = pr.get_shader_location(self.shader, "radius")
+        self.color_loc = pr.get_shader_location(self.shader, "lightColor")
 
     def create_points(self) -> list:
         points = []
@@ -779,31 +776,35 @@ class GameLogic(Interface):
                           int(self.player.box.height),
                           pr.WHITE) """
 
-    def _init_texture(self):
-        width, height = self._lightmap.shape[1], self._lightmap.shape[0]
-
-        img = pr.gen_image_color(width, height, pr.BLACK)
-        self.light_texture = pr.load_texture_from_image(img)
-
-        pr.unload_image(img)
-
-    def update_light_texture(self):
-        # Update pre-allocated RGBA array in-place.
-        # Numba makes this conversion cheap enough for each frame.
-        pack_lightmap_rgba(self._lightmap, self._rgba_lightmap)
-
-        data_ptr = pr.ffi.cast("void *", self._rgba_lightmap.ctypes.data)
-        pr.update_texture(self.light_texture, data_ptr)
-
     def draw_lighting(self):
         pr.begin_blend_mode(pr.BlendMode.BLEND_ADDITIVE)
+        pr.begin_shader_mode(self.shader)
+        
+        res_val = pr.ffi.new("float[]", [float(self._wallmap.shape[1]), float(self._wallmap.shape[0])])
+        pr.set_shader_value(self.shader, self.maze_size_loc, res_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
+        
+        light_x = max(0.0, min(float(self.player.x),
+                               float(self._wallmap.shape[1] - 1)))
+        light_y = max(0.0, min(float(self.player.y),
+                               float(self._wallmap.shape[0] - 1)))
+        pos_val = pr.ffi.new("float[]", [light_x, light_y])
+        pr.set_shader_value(self.shader, self.light_pos_loc, pos_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
+        
+        rad_val = pr.ffi.new("float*", 150.0)
+        pr.set_shader_value(self.shader, self.radius_loc, rad_val, pr.ShaderUniformDataType.SHADER_UNIFORM_FLOAT)
+        
+        col_val = pr.ffi.new("float[]", [PACMAN_LIGHT_COLOR_R/255.0,
+                                         PACMAN_LIGHT_COLOR_G/255.0, 
+                                         PACMAN_LIGHT_COLOR_B/255.0])
+        pr.set_shader_value(self.shader, self.color_loc, col_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC3)
+
         pr.draw_texture_ex(
-            self.light_texture,
+            self.wallmap_texture,
             pr.Vector2(float(CENTER_X), float(CENTER_Y)),
-            0.0,
-            float(self.lightmap_scale),
-            pr.WHITE
+            0.0, 1.0, pr.WHITE
         )
+
+        pr.end_shader_mode()
         pr.end_blend_mode()
 
     def draw_floor(self):
@@ -823,37 +824,10 @@ class GameLogic(Interface):
     def get_cell_pixel_size(self) -> tuple[int, int]:
         return int(self.scale_x), int(self.scale_y)
 
-    def ray_trace(self) -> None:
-        """ray tracing and update the lightmap
-        calls the numba function to do the ray tracing calculations
-        because it's faster than doing it in python"""
-
-        light_x = max(
-            0.0,
-            min(self.player.x, self._wallmap.shape[1] - 1.0),
-        )
-        light_y = max(
-            0.0,
-            min(self.player.y, self._wallmap.shape[0] - 1.0),
-        )
-
-        trace_rays_numba(
-            self._wallmap,
-            self._lightmap,
-            light_x,
-            light_y,
-            self.lightmap_scale,
-            140,
-            180, 180, 180,
-        )
-        self.update_light_texture()
-
     def update(self) -> str:
         super().update()
         if not self.paused:
             self.handle_events()
-
-        self.ray_trace()
 
         self.draw_floor()
         self.draw_lighting()
