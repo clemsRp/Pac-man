@@ -29,7 +29,7 @@ void main()
         vec2 sampleTexCoord = samplePos / mazeSize;
         
         float wall = texture(texture0, sampleTexCoord).r;
-        if (wall > 0.5) {
+        if (wall > 0.5f) {
             shadow = 0.0;
             break;
         }

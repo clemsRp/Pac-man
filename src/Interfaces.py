@@ -104,13 +104,16 @@ class Spinner:
 
         text_x = int(self.rect.x) - text_width - 10
         text_y = int(self.rect.y)
-        
+
         if self.text != "":
             pr.draw_text(self.text, text_x, text_y, font_size, self.text_color)
 
-        if pr.gui_spinner(self.rect, "", self._value_ptr, self.min_value, self.max_value, self.edit_mode):
+        if pr.gui_spinner(self.rect, "",
+                          self._value_ptr,
+                          self.min_value,
+                          self.max_value,
+                          self.edit_mode):
             self.edit_mode = not self.edit_mode
-
 
 
 class Interface(ABC):

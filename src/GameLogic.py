@@ -1,7 +1,6 @@
 import pyray as pr
 import time
 import numpy as np
-from .Constants import (NORTH, EAST, SOUTH, WEST)
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .PauseMenu import PauseMenu
@@ -9,7 +8,26 @@ from .Interfaces import Button
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import *
+from .Constants import (
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST,
+    SPEED,
+    GAME_LOGIC,
+    GAME_OVER,
+    INVINCIBILITY,
+    REMOVE_COLLISIONS,
+    FREEZE_GHOSTS,
+    BONUS_LIVES,
+    PACMAN_LIGHT_COLOR_R,
+    PACMAN_LIGHT_COLOR_G,
+    PACMAN_LIGHT_COLOR_B,
+    PACMAN_LIGHT_RADIUS,
+    LIGHT_FADE_TIME,
+    PACMAN_SPRITE_QUALITY,
+    SUPER_PACGUM_TIME
+)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
@@ -20,10 +38,10 @@ CENTER_Y = 0
 
 class GameLogic(Interface):
     def __init__(
-                self,
-                maze: MazeGenerator,
-                screen_width: int, screen_height: int
-            ):
+        self,
+        maze: MazeGenerator,
+        screen_width: int, screen_height: int
+    ):
         global CENTER_X, CENTER_Y, SPEED
         super().__init__()
         self.maze: MazeGenerator = maze
@@ -102,8 +120,11 @@ class GameLogic(Interface):
 
         self.ghosts: list[Ghost] = []
         self.remove_collisions_active = False
+        self.super_pacgum_state = False
+        self.last_super_pacgum = 0.0
         self._init_raytracing()
-        self.points = self.create_points()
+        self.points: list[CircleBox] = self.create_points()
+        self.super_pacgums: list[CircleBox] = self.create_super_pacgums()
 
     def pause_action(self):
         self.paused = not self.paused
@@ -318,24 +339,24 @@ class GameLogic(Interface):
         """initializes GPU ray tracing by creating wallmap texture"""
         self._wallmap = np.ascontiguousarray(self._build_wallmap())
         height, width = self._wallmap.shape
-        
+
         wallmap_rgba = np.zeros((height, width, 4), dtype=np.uint8)
         wallmap_rgba[self._wallmap] = [255, 255, 255, 255]
-        
+
         img = pr.gen_image_color(width, height, pr.BLANK)
         self.wallmap_texture = pr.load_texture_from_image(img)
         pr.unload_image(img)
-        
+
         data_ptr = pr.ffi.cast("void *", wallmap_rgba.ctypes.data)
         pr.update_texture(self.wallmap_texture, data_ptr)
-        
+
         self.shader = pr.load_shader("", "src/lighting.fs")
         self.maze_size_loc = pr.get_shader_location(self.shader, "mazeSize")
         self.light_pos_loc = pr.get_shader_location(self.shader, "lightPos")
         self.radius_loc = pr.get_shader_location(self.shader, "radius")
         self.color_loc = pr.get_shader_location(self.shader, "lightColor")
 
-    def create_points(self) -> list:
+    def create_points(self) -> list[CircleBox]:
         points = []
         for y in range(self.maze_height):
             for x in range(self.maze_width):
@@ -356,8 +377,26 @@ class GameLogic(Interface):
 
         return points
 
-    def draw_maze(self):
+    def create_super_pacgums(self) -> list[CircleBox]:
+        super_pacgums = []
+        for x in [0, self.maze_width - 1]:
+            for y in [0, self.maze_height - 1]:
+                pos_x = int(
+                    (x + 0.5) * self.scale_x
+                )
+                pos_y = int(
+                    (y + 0.5) * self.scale_y
+                )
+                super_pacgums.append(
+                    CircleBox(
+                        pos_x,
+                        pos_y,
+                        30
+                    )
+                )
+        return super_pacgums
 
+    def draw_maze(self):
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 start_x = int(x * self.scale_x)
@@ -547,10 +586,10 @@ class GameLogic(Interface):
         ghost.update_collision_box()
 
     def can_move_direction(
-                self,
-                add_x: int, add_y: int,
-                ghost: Ghost | None = None,
-            ) -> bool:
+        self,
+        add_x: int, add_y: int,
+        ghost: Ghost | None = None,
+    ) -> bool:
         if ghost is None:
             ghost = self.player
 
@@ -580,6 +619,7 @@ class GameLogic(Interface):
     def handle_events(self):
         """Handle player input and ghost movement, then update score/life."""
         remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
+        freeze_ghosts = self.pause_menu.cheats[FREEZE_GHOSTS]
         # usefull if the player is in a wall
         ghost_target_x = self.player.x
         ghost_target_y = self.player.y
@@ -594,31 +634,32 @@ class GameLogic(Interface):
         if time.time() - self.t_start < 3:
             return
         for ghost in self.ghosts:
-            ghost.move(
-                self.grid,
-                int(ghost_target_x),
-                int(ghost_target_y),
-                int(self.scale_x),
-                int(self.scale_y)
-            )
+            if not freeze_ghosts:
+                ghost.move(
+                    self.grid,
+                    int(ghost_target_x),
+                    int(ghost_target_y),
+                    int(self.scale_x),
+                    int(self.scale_y)
+                )
 
-            add_ghost_x = ghost.direction[0]
-            add_ghost_y = ghost.direction[1]
+                add_ghost_x = ghost.direction[0]
+                add_ghost_y = ghost.direction[1]
 
-            if self.can_move_direction(
-                ghost.try_direction[0],
-                ghost.try_direction[1],
-                ghost
-            ):
-                ghost.direction = ghost.try_direction
-                add_ghost_x = ghost.try_direction[0]
-                add_ghost_y = ghost.try_direction[1]
+                if self.can_move_direction(
+                    ghost.try_direction[0],
+                    ghost.try_direction[1],
+                    ghost
+                ):
+                    ghost.direction = ghost.try_direction
+                    add_ghost_x = ghost.try_direction[0]
+                    add_ghost_y = ghost.try_direction[1]
 
-            self.collision_events(
-                ghost.x + add_ghost_x,
-                ghost.y + add_ghost_y,
-                ghost
-            )
+                self.collision_events(
+                    ghost.x + add_ghost_x,
+                    ghost.y + add_ghost_y,
+                    ghost
+                )
 
         # Player
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
@@ -658,14 +699,17 @@ class GameLogic(Interface):
             ignore_collisions=remove_collisions
         )
 
-        points = []
         for point in self.points:
             if point.collides_with(self.player.hitbox):
                 self.score += 10
-                points.append(point)
-
-        for point in points:
-            self.points.remove(point)
+                self.points.remove(point)
+                break
+        for pacgum in self.super_pacgums:
+            if pacgum.collides_with(self.player.hitbox):
+                self.super_pacgum_state = True
+                self.super_pacgums.remove(pacgum)
+                self.last_super_pacgum = time.time()
+                break
 
         if not remove_collisions:
             invincibility = self.pause_menu.cheats[INVINCIBILITY]
@@ -728,6 +772,14 @@ class GameLogic(Interface):
                 point.radius, pr.WHITE
             )
 
+    def draw_super_pacgums(self) -> None:
+        for point in self.super_pacgums:
+            pr.draw_circle(
+                point.center_x + CENTER_X,
+                point.center_y + CENTER_Y,
+                point.radius, pr.YELLOW
+            )
+
     def draw_player(self):
         # draw hitbox for debugging
         dire = "right"
@@ -779,24 +831,55 @@ class GameLogic(Interface):
     def draw_lighting(self):
         pr.begin_blend_mode(pr.BlendMode.BLEND_ADDITIVE)
         pr.begin_shader_mode(self.shader)
-        
-        res_val = pr.ffi.new("float[]", [float(self._wallmap.shape[1]), float(self._wallmap.shape[0])])
-        pr.set_shader_value(self.shader, self.maze_size_loc, res_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
-        
+
+        res_val = pr.ffi.new(
+            "float[]", [
+                float(
+                    self._wallmap.shape[1]), float(
+                    self._wallmap.shape[0])])
+        pr.set_shader_value(
+            self.shader,
+            self.maze_size_loc,
+            res_val,
+            pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
+
         light_x = max(0.0, min(float(self.player.x),
                                float(self._wallmap.shape[1] - 1)))
         light_y = max(0.0, min(float(self.player.y),
                                float(self._wallmap.shape[0] - 1)))
         pos_val = pr.ffi.new("float[]", [light_x, light_y])
-        pr.set_shader_value(self.shader, self.light_pos_loc, pos_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
-        
-        rad_val = pr.ffi.new("float*", 150.0)
-        pr.set_shader_value(self.shader, self.radius_loc, rad_val, pr.ShaderUniformDataType.SHADER_UNIFORM_FLOAT)
-        
-        col_val = pr.ffi.new("float[]", [PACMAN_LIGHT_COLOR_R/255.0,
-                                         PACMAN_LIGHT_COLOR_G/255.0, 
-                                         PACMAN_LIGHT_COLOR_B/255.0])
-        pr.set_shader_value(self.shader, self.color_loc, col_val, pr.ShaderUniformDataType.SHADER_UNIFORM_VEC3)
+        pr.set_shader_value(
+            self.shader,
+            self.light_pos_loc,
+            pos_val,
+            pr.ShaderUniformDataType.SHADER_UNIFORM_VEC2)
+
+        rad_val = pr.ffi.new("float*", PACMAN_LIGHT_RADIUS)
+        pr.set_shader_value(
+            self.shader,
+            self.radius_loc,
+            rad_val,
+            pr.ShaderUniformDataType.SHADER_UNIFORM_FLOAT)
+
+        pac_color_r = PACMAN_LIGHT_COLOR_R
+        pac_color_g = PACMAN_LIGHT_COLOR_G
+        pac_color_b = PACMAN_LIGHT_COLOR_B
+        time_left = SUPER_PACGUM_TIME - (time.time() - self.last_super_pacgum)
+
+        if time_left < LIGHT_FADE_TIME:
+            fade = max(0.0, time_left / LIGHT_FADE_TIME)
+            pac_color_r *= fade
+            pac_color_g *= fade
+            pac_color_b *= fade
+
+        col_val = pr.ffi.new("float[]", [pac_color_r / 255.0,
+                                         pac_color_g / 255.0,
+                                         pac_color_b / 255.0])
+        pr.set_shader_value(
+            self.shader,
+            self.color_loc,
+            col_val,
+            pr.ShaderUniformDataType.SHADER_UNIFORM_VEC3)
 
         pr.draw_texture_ex(
             self.wallmap_texture,
@@ -829,11 +912,16 @@ class GameLogic(Interface):
         if not self.paused:
             self.handle_events()
 
+        if time.time() - self.last_super_pacgum > SUPER_PACGUM_TIME:
+            self.super_pacgum_state = False
+
         self.draw_floor()
-        self.draw_lighting()
+        if self.super_pacgum_state:
+            self.draw_lighting()
         self.draw_maze()
 
         self.draw_points()
+        self.draw_super_pacgums()
         self.draw_player()
         self.draw_ghosts()
 
