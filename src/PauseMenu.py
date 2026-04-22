@@ -5,7 +5,8 @@ from .Constants import (PAUSE_MENU,
                         REMOVE_COLLISIONS,
                         LEVEL_SKIP,
                         FREEZE_GHOSTS,
-                        BONUS_LIVES)
+                        BONUS_LIVES,
+                        AK47_ALWAYS_ACTIVE)
 import pyray as pr
 
 
@@ -51,7 +52,8 @@ class PauseMenu(Interface):
                                               REMOVE_COLLISIONS: False,
                                               LEVEL_SKIP: False,
                                               FREEZE_GHOSTS: False,
-                                              BONUS_LIVES: 0}
+                                              BONUS_LIVES: 0,
+                                              AK47_ALWAYS_ACTIVE: False}
         self.add_button(resume_button)
 
         checkbox_texts = [
@@ -59,6 +61,7 @@ class PauseMenu(Interface):
             REMOVE_COLLISIONS,
             LEVEL_SKIP,
             FREEZE_GHOSTS,
+            AK47_ALWAYS_ACTIVE
         ]
 
         spinner_texts = [

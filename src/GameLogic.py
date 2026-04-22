@@ -3,7 +3,7 @@ import time
 import numpy as np
 from math import atan2
 from mazegenerator.mazegenerator import MazeGenerator
-from .Physics import CollisionBox, CircleBox, RectangleBox
+from .Physics import CollisionBox, CircleBox, RectangleBox, Bullet
 from .PauseMenu import PauseMenu
 from .Interfaces import Button
 from .Player import Player
@@ -16,7 +16,10 @@ from .Constants import (
     WEST,
     SPEED,
     GAME_LOGIC,
+    BULLET_SPEED,
+    BULLET_RADIUS,
     GAME_OVER,
+    AK47_ALWAYS_ACTIVE,
     INVINCIBILITY,
     REMOVE_COLLISIONS,
     FREEZE_GHOSTS,
@@ -28,7 +31,7 @@ from .Constants import (
     LIGHT_FADE_TIME,
     PACMAN_SPRITE_QUALITY,
     AK47_SPRITE_QUALITY,
-    SUPER_PACGUM_TIME
+    SUPER_PACGUM_TIME,
 )
 
 WALL_WIDTH = 3
@@ -95,14 +98,13 @@ class GameLogic(Interface):
         CENTER_X -= CENTER_X % 10
         CENTER_Y -= CENTER_Y % 10
 
-        self.entities: list[CollisionBox] = []
         self.collision_boxs: list[
             list[
                 list[
                     RectangleBox]
             ]] = self.create_collision_boxs()
 
-        self.entities = [Player(538, 300, 20, self.scale_x, self.scale_y)]
+        self.bullets: list[Bullet] = []
         self.assets: dict = {}
         SIZE_PACMAN = self.update_radius()
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
@@ -486,15 +488,6 @@ class GameLogic(Interface):
                                       cell_height,
                                       WALL_COLOR)
 
-        """ for y in range(len(self.collision_boxs)):
-            for x in range(len(self.collision_boxs[y])):
-                for el in self.collision_boxs[y][x]:
-                    pr.draw_rectangle(
-                        el.x, el.y,
-                        el.width, el.height,
-                        pr.WHITE
-                    ) """
-
     def create_future_box(self, new_x: float, new_y: float) -> CollisionBox:
         if isinstance(self.player.box, CircleBox):
             return CircleBox(new_x, new_y, float(self.player.radius))
@@ -513,9 +506,6 @@ class GameLogic(Interface):
                           future_box_x: CollisionBox) -> bool:
 
         collision_x = False
-        # for entity in self.entities:
-        #     if entity.box.collides_with(future_box_x):
-        #         return True
 
         for dy in [-1, 0, 1]:
             ny = int(box_y) + dy
@@ -532,9 +522,6 @@ class GameLogic(Interface):
     def check_collision_y(self, box_x: int, new_y: float,
                           future_box_y: CollisionBox) -> bool:
         collision_y = False
-        # for entity in self.entities:
-        #     if entity.box.collides_with(future_box_y):
-        #         return True
 
         for dy in [-1, 0, 1]:
             ny = int(new_y // self.scale_y) + dy
@@ -664,10 +651,13 @@ class GameLogic(Interface):
 
         self.t_start = time.time()
 
-    def handle_events(self):
+    def handle_events(self, mouse_angle_deg: float) -> None:
         """Handle player input and ghost movement, then update score/life."""
         remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
         freeze_ghosts = self.pause_menu.cheats[FREEZE_GHOSTS]
+        ak47_active: bool = self.pause_menu.cheats[AK47_ALWAYS_ACTIVE] or \
+            self.super_pacgum_state
+
         # usefull if the player is in a wall
         ghost_target_x = self.player.x
         ghost_target_y = self.player.y
@@ -710,22 +700,47 @@ class GameLogic(Interface):
                 )
 
         # Player
-        if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
+        right = pr.is_key_down(
+            pr.KeyboardKey.KEY_RIGHT) or pr.is_key_down(
+            pr.KeyboardKey.KEY_D)
+        left = pr.is_key_down(
+            pr.KeyboardKey.KEY_LEFT) or pr.is_key_down(
+            pr.KeyboardKey.KEY_A)
+        up = pr.is_key_down(
+            pr.KeyboardKey.KEY_UP) or pr.is_key_down(
+            pr.KeyboardKey.KEY_W)
+        down = pr.is_key_down(
+            pr.KeyboardKey.KEY_DOWN) or pr.is_key_down(
+            pr.KeyboardKey.KEY_S)
+
+        left_click = pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT)
+
+        if ak47_active and left_click:
+            self.bullets.append(
+                Bullet(
+                    self.player.x + CENTER_X,
+                    self.player.y + CENTER_Y,
+                    BULLET_RADIUS,
+                    mouse_angle_deg,
+                    BULLET_SPEED
+                )
+                )
+        if right:
             self.player.try_direction = (SPEED, 0)
             if remove_collisions or self.can_move_direction(SPEED, 0):
                 self.player.direction = (SPEED, 0)
 
-        if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
+        if left:
             self.player.try_direction = (-SPEED, 0)
             if remove_collisions or self.can_move_direction(-SPEED, 0):
                 self.player.direction = (-SPEED, 0)
 
-        if pr.is_key_down(pr.KeyboardKey.KEY_UP):
+        if up:
             self.player.try_direction = (0, -SPEED)
             if remove_collisions or self.can_move_direction(0, -SPEED):
                 self.player.direction = (0, -SPEED)
 
-        if pr.is_key_down(pr.KeyboardKey.KEY_DOWN):
+        if down:
             self.player.try_direction = (0, SPEED)
             if remove_collisions or self.can_move_direction(0, SPEED):
                 self.player.direction = (0, SPEED)
@@ -912,7 +927,7 @@ class GameLogic(Interface):
         maze_h = int(self.maze_height * self.scale_y)
         pr.draw_rectangle(CENTER_X, CENTER_Y, maze_w, maze_h, pr.BLACK)
 
-    def draw_ghosts(self):
+    def draw_ghosts(self) -> None:
         for ghost in self.ghosts:
             pr.draw_texture(
                 ghost.ghost,
@@ -921,7 +936,7 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
-    def draw_ak47(self) -> None:
+    def get_angle_deg(self) -> float:
         mouse_pos = pr.get_mouse_position()
         player_pos = pr.Vector2(self.player.x + CENTER_X,
                                 self.player.y + CENTER_Y)
@@ -931,12 +946,26 @@ class GameLogic(Interface):
         angle_deg: float = (angle_rad * 180) / np.pi
         if angle_deg < 0:
             angle_deg += 360
+        return angle_deg
+
+    def draw_ak47(self, angle_deg: float) -> None:
+        scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
+        source_height = AK47_SPRITE_QUALITY
+        if 90 < angle_deg < 270:
+            source_height = -AK47_SPRITE_QUALITY
+
+        pivot_ratio_x = 0.25  # place it at 25% of the width
+        pivot_ratio_y = 0.50  # place it at 50% of the height
         pr.draw_texture_pro(
             self.assets["ak47"],
-            pr.Rectangle(0, 0, AK47_SPRITE_QUALITY, AK47_SPRITE_QUALITY),
-            pr.Rectangle(0, 0, AK47_SPRITE_QUALITY, AK47_SPRITE_QUALITY),
-            pr.Vector2(AK47_SPRITE_QUALITY / 2,
-                       AK47_SPRITE_QUALITY / 2),
+            pr.Rectangle(0, 0, AK47_SPRITE_QUALITY, source_height),
+            pr.Rectangle(
+                self.player.x + CENTER_X,
+                self.player.y + CENTER_Y,
+                AK47_SPRITE_QUALITY * scale,
+                AK47_SPRITE_QUALITY * scale),
+            pr.Vector2((AK47_SPRITE_QUALITY * scale) * pivot_ratio_x,
+                       (AK47_SPRITE_QUALITY * scale) * pivot_ratio_y),
             angle_deg,
             pr.WHITE
         )
@@ -946,8 +975,9 @@ class GameLogic(Interface):
 
     def update(self) -> str:
         super().update()
+        mouse_angle = self.get_angle_deg()
         if not self.paused:
-            self.handle_events()
+            self.handle_events(mouse_angle)
 
         if time.time() - self.last_super_pacgum > SUPER_PACGUM_TIME:
             self.super_pacgum_state = False
@@ -960,20 +990,25 @@ class GameLogic(Interface):
         self.draw_points()
         self.draw_super_pacgums()
         self.draw_player()
-        
+
         self.draw_ghosts()
-        if self.super_pacgum_state:
-            self.draw_ak47()
+
+        for bullet in self.bullets:
+            pr.draw_circle(int(bullet.center_x),
+                           int(bullet.center_y),
+                           int(bullet.radius),
+                           pr.RED)
+            bullet.update()
+
+        if self.super_pacgum_state or \
+                self.pause_menu.cheats[AK47_ALWAYS_ACTIVE]:
+            self.draw_ak47(mouse_angle)
+
         if self.paused:
             pause_menu_result: str = self.pause_menu.update()
             self.sync_remove_collisions_state()
             if pause_menu_result == GAME_LOGIC:
                 self.resume_game()
-
-        """ pr.draw_circle(int(self.entities[0].x),
-                        int(self.entities[0].y),
-                        (self.entities[0].radius),
-                        pr.RED) """
 
         pr.draw_text(
             "Score: " + str(self.score),

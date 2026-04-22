@@ -4,6 +4,8 @@ SOUTH = 0b0100
 WEST = 0b1000
 
 SPEED = 2.0
+BULLET_SPEED = 3.0
+BULLET_RADIUS = 10.0
 
 GAME_LOGIC = "gamelogic"
 GAME_OVER = "gameover"
@@ -16,6 +18,7 @@ REMOVE_COLLISIONS = "remove_collisions"
 LEVEL_SKIP = "level_skip"
 FREEZE_GHOSTS = "freeze_ghosts"
 BONUS_LIVES = "bonus_lives"
+AK47_ALWAYS_ACTIVE = "AK47_always_active"
 
 DELTA: dict[int, tuple[int, int]] = {
     NORTH: (-1, 0),
