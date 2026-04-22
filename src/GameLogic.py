@@ -616,6 +616,52 @@ class GameLogic(Interface):
 
         return not collision_x and not collision_y
 
+    def death_event(self) -> None:
+        self.life -= 1
+        self.ghosts[0].x = int(self.scale_x / 2)
+        self.ghosts[0].y = int(self.scale_y / 2)
+        self.ghosts[0].direction = (0, 0)
+        self.ghosts[0].try_direction = (0, 0)
+
+        self.ghosts[1].x = int(self.scale_x / 2)
+        self.ghosts[1].y = int(
+            (self.maze_height - 0.5) * self.scale_y
+        )
+        self.ghosts[1].direction = (0, 0)
+        self.ghosts[1].try_direction = (0, 0)
+
+        self.ghosts[2].x = int(
+            (self.maze_width - 0.5) * self.scale_x
+        )
+        self.ghosts[2].y = int(self.scale_y / 2)
+        self.ghosts[2].direction = (0, 0)
+        self.ghosts[2].try_direction = (0, 0)
+
+        self.ghosts[3].x = int(
+            (self.maze_width - 0.5) * self.scale_x
+        )
+        self.ghosts[3].y = int(
+            (self.maze_height - 0.5) * self.scale_y
+        )
+        self.ghosts[3].direction = (0, 0)
+        self.ghosts[3].try_direction = (0, 0)
+
+        for ghost_to_reset in self.ghosts:
+            ghost_to_reset.update_collision_box()
+
+        is_pair = (self.maze_width % 2 + 1) % 2
+        self.player.x = int(
+            (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
+        )
+        self.player.y = int(
+            (0.5 + self.maze_height // 2) * self.scale_y
+        )
+        self.player.direction = (0, 0)
+        self.player.try_direction = (0, 0)
+        self.player.update_collision_box()
+
+        self.t_start = time.time()
+
     def handle_events(self):
         """Handle player input and ghost movement, then update score/life."""
         remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
@@ -716,38 +762,7 @@ class GameLogic(Interface):
             for ghost in self.ghosts:
                 if not invincibility \
                         and ghost.hitbox.collides_with(self.player.hitbox):
-                    self.life -= 1
-                    self.ghosts[0].x = int(self.scale_x / 2)
-                    self.ghosts[0].y = int(self.scale_y / 2)
-
-                    self.ghosts[1].x = int(self.scale_x / 2)
-                    self.ghosts[1].y = int(
-                        (self.maze_height - 0.5) * self.scale_y
-                    )
-
-                    self.ghosts[2].x = int(
-                        (self.maze_width - 0.5) * self.scale_x
-                    )
-                    self.ghosts[2].y = int(self.scale_y / 2)
-
-                    self.ghosts[3].x = int(
-                        (self.maze_width - 0.5) * self.scale_x
-                    )
-                    self.ghosts[3].y = int(
-                        (self.maze_height - 0.5) * self.scale_y
-                    )
-
-                    is_pair = (self.maze_width % 2 + 1) % 2
-                    self.player.x = int(
-                        (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
-                    )
-                    self.player.y = int(
-                        (0.5 + self.maze_height // 2) * self.scale_y
-                    )
-                    self.player.direction = (0, 0)
-                    self.player.try_direction = (0, 0)
-
-                    self.t_start = time.time()
+                    self.death_event()
                     break
 
     def update_radius(self) -> float:

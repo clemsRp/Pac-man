@@ -83,7 +83,7 @@ class GameManager:
         }
         self.assets = {
             "pacman": [],
-            "ghosts": {}
+            "ghosts": {},
         }
 
         contenu = os.listdir(paths["pacman"])
@@ -99,9 +99,11 @@ class GameManager:
 
         for f in files:
             image = pr.load_image(os.path.join(paths["pacman"], f))
-            pr.image_resize(image,
-                            PACMAN_SPRITE_QUALITY,
-                            PACMAN_SPRITE_QUALITY)
+            # if img is not 512 px:
+
+            # pr.image_resize(image,
+            #                 PACMAN_SPRITE_QUALITY,
+            #                 PACMAN_SPRITE_QUALITY)
             self.assets["pacman"].append(
                 pr.load_texture_from_image(image)
             )
@@ -118,6 +120,8 @@ class GameManager:
                             64)
             self.assets["ghosts"][f[:-4]] = pr.load_texture_from_image(image)
 
+        ak47 = pr.load_image("assets/other/ak47.png")
+        self.assets["ak47"] = pr.load_texture_from_image(ak47)
         skull = pr.load_image("assets/other/skull.png")
         pr.image_resize(skull,
                         300,
