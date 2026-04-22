@@ -1,6 +1,7 @@
 import pyray as pr
 import time
 import numpy as np
+from math import atan2
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox
 from .PauseMenu import PauseMenu
@@ -26,6 +27,7 @@ from .Constants import (
     PACMAN_LIGHT_RADIUS,
     LIGHT_FADE_TIME,
     PACMAN_SPRITE_QUALITY,
+    AK47_SPRITE_QUALITY,
     SUPER_PACGUM_TIME
 )
 
@@ -919,6 +921,26 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
+    def draw_ak47(self) -> None:
+        mouse_pos = pr.get_mouse_position()
+        player_pos = pr.Vector2(self.player.x + CENTER_X,
+                                self.player.y + CENTER_Y)
+        diff_vec: pr.Vector2 = pr.Vector2(mouse_pos.x - player_pos.x,
+                                          mouse_pos.y - player_pos.y)
+        angle_rad: float = atan2(diff_vec.y, diff_vec.x)
+        angle_deg: float = (angle_rad * 180) / np.pi
+        if angle_deg < 0:
+            angle_deg += 360
+        pr.draw_texture_pro(
+            self.assets["ak47"],
+            pr.Rectangle(0, 0, AK47_SPRITE_QUALITY, AK47_SPRITE_QUALITY),
+            pr.Rectangle(0, 0, AK47_SPRITE_QUALITY, AK47_SPRITE_QUALITY),
+            pr.Vector2(AK47_SPRITE_QUALITY / 2,
+                       AK47_SPRITE_QUALITY / 2),
+            angle_deg,
+            pr.WHITE
+        )
+
     def get_cell_pixel_size(self) -> tuple[int, int]:
         return int(self.scale_x), int(self.scale_y)
 
@@ -938,8 +960,10 @@ class GameLogic(Interface):
         self.draw_points()
         self.draw_super_pacgums()
         self.draw_player()
+        
         self.draw_ghosts()
-
+        if self.super_pacgum_state:
+            self.draw_ak47()
         if self.paused:
             pause_menu_result: str = self.pause_menu.update()
             self.sync_remove_collisions_state()
