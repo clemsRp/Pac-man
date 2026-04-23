@@ -6,10 +6,14 @@ from .Physics import CollisionBox, CircleBox, RectangleBox
 from .Player import Player
 from .Ghost import Ghost
 from .Interfaces import Interface
-from .Constants import (SPEED, GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY)
+from .Constants import (
+    GAME_LOGIC, GAME_OVER, PACMAN_SPRITE_QUALITY,
+    GHOST_SPRITE_QUALITY, SPEED
+)
 
 WALL_WIDTH = 3
 WALL_COLOR = pr.BLUE
+
 
 CENTER_X = 0
 CENTER_Y = 0
@@ -21,7 +25,7 @@ class GameLogic(Interface):
                 maze: MazeGenerator,
                 screen_width: int, screen_height: int
             ):
-        global CENTER_X, CENTER_Y, SPEED
+        global CENTER_X, CENTER_Y
 
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
@@ -37,7 +41,7 @@ class GameLogic(Interface):
         self.scale_y = self.scale_x
 
         self.score = 0
-        self.life = 0
+        self.life = 3
 
         self.t_start = 0
 
@@ -91,25 +95,37 @@ class GameLogic(Interface):
                 self.assets["ghosts"]["pinky"],
                 self.assets["ghosts"]["blue_ghost"],
                 int(self.scale_x / 2),
-                int(self.scale_y / 2)
+                int(self.scale_y / 2),
+                int(0.8 * self.scale_x),
+                int(0.9 * self.scale_x),
+                int(0.9 * self.scale_x)
             ),
             Ghost(
                 self.assets["ghosts"]["clyde"],
                 self.assets["ghosts"]["blue_ghost"],
                 int(self.scale_x / 2),
-                int((self.maze_height - 0.5) * self.scale_y)
+                int((self.maze_height - 0.5) * self.scale_y),
+                int(0.8 * self.scale_x),
+                int(0.9 * self.scale_x),
+                int(0.9 * self.scale_x)
             ),
             Ghost(
                 self.assets["ghosts"]["inky"],
                 self.assets["ghosts"]["blue_ghost"],
                 int((self.maze_width - 0.5) * self.scale_x),
-                int(self.scale_y / 2)
+                int(self.scale_y / 2),
+                int(0.8 * self.scale_x),
+                int(0.9 * self.scale_x),
+                int(0.9 * self.scale_x)
             ),
             Ghost(
                 self.assets["ghosts"]["blinky"],
                 self.assets["ghosts"]["blue_ghost"],
                 int((self.maze_width - 0.5) * self.scale_x),
-                int((self.maze_height - 0.5) * self.scale_y)
+                int((self.maze_height - 0.5) * self.scale_y),
+                int(0.8 * self.scale_x),
+                int(0.9 * self.scale_x),
+                int(0.9 * self.scale_x)
             )
         ]
 
@@ -205,13 +221,15 @@ class GameLogic(Interface):
                     pos_y = int(
                         (y + 0.5) * self.scale_y
                     )
-                    points.append(
-                        CircleBox(
-                            pos_x,
-                            pos_y,
-                            10
+                    if pos_x != self.player.x or \
+                            pos_y != self.player.y:
+                        points.append(
+                            CircleBox(
+                                pos_x,
+                                pos_y,
+                                int(0.1 * self.scale_x)
+                            )
                         )
-                    )
 
         return points
 
@@ -604,10 +622,25 @@ class GameLogic(Interface):
 
     def draw_ghosts(self):
         for ghost in self.ghosts:
-            pr.draw_texture(
-                ghost.ghost,
-                int(ghost.x - 32 + CENTER_X),
-                int(ghost.y - 32 + CENTER_Y),
+            texture = ghost.ghost
+
+            # même logique que pacman
+            scale = self.player.radius / (GHOST_SPRITE_QUALITY / 2)
+
+            pr.draw_texture_pro(
+                texture,
+                pr.Rectangle(0, 0, texture.width, texture.height),
+                pr.Rectangle(
+                    ghost.x + CENTER_X,
+                    ghost.y + CENTER_Y,
+                    texture.width * scale,
+                    texture.height * scale
+                ),
+                pr.Vector2(
+                    (texture.width * scale) / 2.0,
+                    (texture.height * scale) / 2.0
+                ),
+                0,
                 pr.WHITE
             )
 
@@ -622,11 +655,16 @@ class GameLogic(Interface):
                         (self.entities[0].radius),
                         pr.RED) """
 
+        pos_x: int = self.screen_width - pr.measure_text(
+            "Score: " + str(self.score),
+            20
+        ) - 5
+
         pr.draw_text(
             "Score: " + str(self.score),
-            10 + CENTER_X,
-            10 + CENTER_Y,
-            20, pr.RAYWHITE
+            pos_x,
+            15,
+            20, pr.WHITE
         )
 
         for k in range(self.life):
@@ -637,9 +675,10 @@ class GameLogic(Interface):
                 texture,
                 pr.Rectangle(0, 0, texture.width, texture.height),
                 pr.Rectangle(
-                    70 + k * 80,
-                    70,
-                    64, 64
+                    (k + 0.5) * (texture.width * 1.2) * scale,
+                    25,
+                    texture.width * scale,
+                    texture.height * scale
                 ),
                 pr.Vector2(
                     (texture.width * scale) / 2.0,

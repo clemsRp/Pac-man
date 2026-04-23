@@ -1,7 +1,14 @@
 [
 	{
-		"players": [
-			{"pseudo": "cocopops", "score": 99999999999999999999999999}
-		]
+	    "players": [
+	        {
+	            "pseudo": "cocopops",
+	            "score": 999
+	        },
+	        {
+	            "pseudo": "crappo",
+	            "score": 4242
+	        }
+	    ]
 	}
 ]

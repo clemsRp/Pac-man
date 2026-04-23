@@ -18,3 +18,4 @@ DELTA: dict[int, tuple[int, int]] = {
 }
 MAX_SCORES_SHOWN = 10
 PACMAN_SPRITE_QUALITY = 512
+GHOST_SPRITE_QUALITY = 64
