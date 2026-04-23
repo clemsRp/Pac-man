@@ -57,9 +57,27 @@ class GameManager:
             if interface_result == EXIT:
                 break
 
-            state = False
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
-                state = True
+                self.interfaces[interface_result].life = 3
+                self.interfaces[interface_result].t_start = time.time()
+                self.interfaces[interface_result].score = 0
+                self.interfaces[interface_result].points = (
+                    self.interfaces[interface_result].create_points()
+                )
+
+            if self.state != GAME_OVER and interface_result == GAME_OVER:
+                self.interfaces[interface_result].score = (
+                    self.interfaces["gamelogic"].score
+                )
+                self.interfaces[interface_result].state = GAME_OVER
+
+            if self.state != MAIN_MENU and interface_result == MAIN_MENU:
+                self.interfaces[interface_result].next_state = MAIN_MENU
+                self.parser.parse_config(self.config_file)
+                self.interfaces[interface_result].compute_scores()
+                self.interfaces[interface_result].scores = (
+                    self.parser.get_scores().get("players", [])
+                )
 
             if self.state != MAIN_MENU and interface_result == MAIN_MENU:
                 self.parser.parse_config(self.config_file)
@@ -72,14 +90,21 @@ class GameManager:
             if interface_result != self.state:
                 self.state = interface_result
 
-            if state:
-                self.interfaces[self.state].t_start = time.time()
-
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
         # pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
-        pr.set_window_min_size(100, 100)
+        min_width: int = 1200
+        min_height: int = 1000
+
+        pr.set_window_min_size(min_width, min_height)
+
+        if width < min_width:
+            width = min_width
+        if height < min_height:
+            height = min_height
+
+        print(width, height)
 
         pr.init_window(width, height, "Pac-Man")
         pr.gui_load_style("pacman_style.rgs")

@@ -7,14 +7,17 @@ from src.GameOver import GameOver
 from src.MainMenu import MainMenu
 import pyray as pr
 if __name__ == "__main__":
+
     try:
         parser = Parser()
-        parser.parse_config("test.json")
+        parser.parse_config("config.json")
+
         maze_gen = MazeGenerator((16, 16))
 
-        window_width = 800
-        window_height = 600
-        game_manager = GameManager(maze_gen, parser, "test.json")
+        window_width = 1000
+        window_height = 800
+
+        game_manager = GameManager(maze_gen, parser, "config.json")
 
         # get the maximum window size
         window_width, window_height = game_manager.create_window(
@@ -45,10 +48,12 @@ if __name__ == "__main__":
                                    main_menu)
         game_manager.add_interface("gameover",
                                    game_over)
-        game_manager.set_state("gameover")
+
+        game_manager.set_state("mainmenu")
 
         game_logic.set_assets(game_manager.assets)
         game_over.set_assets(game_manager.assets)
+
         game_manager.start_game()
         game_manager.free_assets()
         game_manager.close_window()

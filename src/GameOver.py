@@ -19,9 +19,15 @@ class GameOver(Interface):
             ):
         super().__init__()
 
+        global FONT_SIZE
+        FONT_SIZE = int(0.06 * min([
+            screen_width,
+            screen_height
+        ]))
+
         self.state = GAME_OVER
 
-        self.score = 4242
+        self.score = 0
         self.pseudo = ""
 
         self.screen_width = screen_width
@@ -50,7 +56,7 @@ class GameOver(Interface):
         btn_width: int = int(input_width / 2)
 
         save_button: Button = Button(
-            int(0.5 * (self.screen_width - input_width / 2)),
+            int(0.5 * (self.screen_width - input_width)),
             int(2 / 3 * self.screen_height + 2.2 * FONT_SIZE),
             btn_width - 5,
             2 * FONT_SIZE,
@@ -118,7 +124,7 @@ class GameOver(Interface):
             self.save_data()
 
     def draw_game_over(self):
-        font_size = 200
+        font_size = int(3.5 * FONT_SIZE)
         center_title = pr.measure_text(
             "GAME   VER", font_size
         )
@@ -135,16 +141,47 @@ class GameOver(Interface):
             font_size, pr.RED
         )
 
-        pr.draw_texture(
-            self.assets["skull"],
-            int(
-                self.screen_width / 2 -
-                center_title / 2 + 575
+        texture = self.assets["skull"]
+        scale = font_size / texture.width
+
+        pr.draw_texture_pro(
+            texture,
+            pr.Rectangle(
+                0, 0,
+                texture.width,
+                texture.height
             ),
-            int(
-                self.screen_height / 3 -
-                font_size / 1.25
+            pr.Rectangle(
+                int(
+                    self.screen_width / 2 -
+                    center_title / 2 + 20 +
+                    pr.measure_text(
+                        "GAME ", int(font_size * 0.92)
+                    )
+                ),
+                int(
+                    self.screen_height / 3 -
+                    font_size / 2 -
+                    (texture.height * scale - font_size) / 2
+                ),
+                int(texture.width * scale),
+                int(texture.height * scale)
             ),
+            pr.Vector2(0, 0),
+            0, pr.WHITE
+        )
+
+    def draw_score_rank(self) -> None:
+        text1: str = f"Score: {self.score}, Rank: {self.rank}"
+        center_text1 = pr.measure_text(
+            text1, FONT_SIZE
+        )
+
+        pr.draw_text(
+            text1,
+            int(0.5 * self.screen_width - center_text1 / 2),
+            int(0.5 * self.screen_height - 0.7 * FONT_SIZE),
+            FONT_SIZE,
             pr.WHITE
         )
 

@@ -688,7 +688,7 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
-        if self.life == -1:
+        if self.life < 0:
             return GAME_OVER
 
         return GAME_LOGIC
