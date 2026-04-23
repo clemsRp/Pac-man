@@ -78,11 +78,13 @@ class GameLogic(Interface):
         self.add_button(pause_button)
         self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
         self.paused = False
+        self.total_paused_time = 0.0
+        self.pause_started_at: float | None = None
 
         self.score = 0
         self.life = 0
 
-        self.t_start = 0
+        self.t_start = 0.0
 
         CENTER_X = int(
             (
@@ -98,11 +100,11 @@ class GameLogic(Interface):
         CENTER_X -= CENTER_X % 10
         CENTER_Y -= CENTER_Y % 10
 
-        self.collision_boxs: list[
+        self.collision_boxs: dict[str, list[
             list[
                 list[
                     RectangleBox]
-            ]] = self.create_collision_boxs()
+            ]]] = self.create_collision_boxs()
 
         self.bullets: list[Bullet] = []
         self.assets: dict = {}
@@ -130,10 +132,25 @@ class GameLogic(Interface):
         self.points: list[CircleBox] = self.create_points()
         self.super_pacgums: list[CircleBox] = self.create_super_pacgums()
 
+    def get_game_time(self) -> float:
+        """Return a pause-aware game time in seconds."""
+        now = time.time()
+        paused_time = self.total_paused_time
+        if self.paused and self.pause_started_at is not None:
+            paused_time += now - self.pause_started_at
+        return now - paused_time
+
     def pause_action(self):
-        self.paused = not self.paused
+        if not self.paused:
+            self.paused = True
+            self.pause_started_at = time.time()
+        else:
+            self.resume_game()
 
     def resume_game(self):
+        if self.paused and self.pause_started_at is not None:
+            self.total_paused_time += time.time() - self.pause_started_at
+            self.pause_started_at = None
         self.paused = False
 
     def get_nearest_walkable_cell_center(
@@ -210,11 +227,21 @@ class GameLogic(Interface):
             )
         ]
 
-    def create_collision_boxs(self) -> list[list[list[RectangleBox]]]:
+    def create_collision_boxs(
+        self,
+    ) -> dict[str, list[list[list[RectangleBox]]]]:
+        collision_boxs = {}
+
         boxes: list[list[list[RectangleBox]]] = [[
             [] for _ in range(self.maze_width)]
             for _ in range(self.maze_height)]
 
+        added_boxes: list[list[list[RectangleBox]]] = [[
+            [] for _ in range(self.maze_width)]
+            for _ in range(self.maze_height)]
+
+        collision_boxs["walls"] = boxes
+        collision_boxs["added_boxes"] = added_boxes
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 cell = self.grid[y][x]
@@ -228,7 +255,7 @@ class GameLogic(Interface):
 
                 # Box corners
                 if y > 0 and x > 0:
-                    boxes[y][x].append(
+                    added_boxes[y][x].append(
                         RectangleBox(
                             start_x - WALL_WIDTH,
                             start_y - WALL_WIDTH,
@@ -289,7 +316,7 @@ class GameLogic(Interface):
                         )
                     )
 
-        return boxes
+        return collision_boxs
 
     def _build_wallmap(self) -> np.ndarray:
         """Précalcule un array booléen
@@ -514,7 +541,10 @@ class GameLogic(Interface):
                 for dx in [-1, 0, 1]:
                     nx = box_x + dx
                     if 0 <= nx < self.maze_width:
-                        for box in self.collision_boxs[ny][nx]:
+                        for box in self.collision_boxs["walls"][ny][nx]:
+                            if future_box_x.collides_with(box):
+                                return True
+                        for box in self.collision_boxs["added_boxes"][ny][nx]:
                             if future_box_x.collides_with(box):
                                 return True
         return collision_x
@@ -530,7 +560,10 @@ class GameLogic(Interface):
                 for dx in [-1, 0, 1]:
                     nx = box_x + dx
                     if 0 <= nx < self.maze_width:
-                        for box in self.collision_boxs[ny][nx]:
+                        for box in self.collision_boxs["walls"][ny][nx]:
+                            if future_box_y.collides_with(box):
+                                return True
+                        for box in self.collision_boxs["added_boxes"][ny][nx]:
                             if future_box_y.collides_with(box):
                                 return True
         return collision_y
@@ -649,7 +682,7 @@ class GameLogic(Interface):
         self.player.try_direction = (0, 0)
         self.player.update_collision_box()
 
-        self.t_start = time.time()
+        self.t_start = self.get_game_time()
 
     def handle_events(self, mouse_angle_deg: float) -> None:
         """Handle player input and ghost movement, then update score/life."""
@@ -669,7 +702,7 @@ class GameLogic(Interface):
                 )
             )
         # Ghosts
-        if time.time() - self.t_start < 3:
+        if self.get_game_time() - self.t_start < 3:
             return
         for ghost in self.ghosts:
             if not freeze_ghosts:
@@ -718,13 +751,13 @@ class GameLogic(Interface):
         if ak47_active and left_click:
             self.bullets.append(
                 Bullet(
-                    self.player.x + CENTER_X,
-                    self.player.y + CENTER_Y,
+                    self.player.x,
+                    self.player.y,
                     BULLET_RADIUS,
                     mouse_angle_deg,
                     BULLET_SPEED
                 )
-                )
+            )
         if right:
             self.player.try_direction = (SPEED, 0)
             if remove_collisions or self.can_move_direction(SPEED, 0):
@@ -767,12 +800,77 @@ class GameLogic(Interface):
                 self.score += 10
                 self.points.remove(point)
                 break
+
         for pacgum in self.super_pacgums:
             if pacgum.collides_with(self.player.hitbox):
                 self.super_pacgum_state = True
                 self.super_pacgums.remove(pacgum)
-                self.last_super_pacgum = time.time()
+                self.last_super_pacgum = self.get_game_time()
                 break
+
+        for bullet in self.bullets:
+            bullet.update()
+            x = bullet.center_x
+            y = bullet.center_y
+            cell_x = int(x // self.scale_x)
+            cell_y = int(y // self.scale_y)
+            resolved = False
+            for dx in [-1, 0, 1]:
+                if resolved:
+                    break
+                nx = cell_x + dx
+                if 0 <= nx < self.maze_width:
+                    for dy in [-1, 0, 1]:
+                        if resolved:
+                            break
+                        ny = cell_y + dy
+                        if 0 <= ny < self.maze_height:
+                            boxes = self.collision_boxs["walls"][ny][nx]
+                            for box in boxes:
+                                if bullet.collides_with(box):
+                                    bullet.remaining_bounces -= 1
+                                    bullet.center_x -= (
+                                        bullet.speed * np.cos(bullet.angle)
+                                    )
+                                    bullet.center_y -= (
+                                        bullet.speed * np.sin(bullet.angle)
+                                    )
+                                    closest_x = max(
+                                        box.x, min(
+                                            bullet.center_x,
+                                            box.x + box.width))
+                                    closest_y = max(
+                                        box.y, min(
+                                            bullet.center_y,
+                                            box.y + box.height))
+                                    dx_norm = bullet.center_x - closest_x
+                                    dy_norm = bullet.center_y - closest_y
+
+                                    if dx_norm == 0 and dy_norm == 0:
+                                        bullet.angle += np.pi
+                                    else:
+                                        norm = np.hypot(dx_norm, dy_norm)
+                                        nx_norm = dx_norm / norm
+                                        ny_norm = dy_norm / norm
+                                        vel_x = np.cos(bullet.angle)
+                                        vel_y = np.sin(bullet.angle)
+                                        dot_prod = vel_x * nx_norm + \
+                                            vel_y * ny_norm
+
+                                        if dot_prod < 0:
+                                            rx = vel_x - 2 * dot_prod * nx_norm
+                                            ry = vel_y - 2 * dot_prod * ny_norm
+                                            bullet.angle = np.arctan2(ry, rx)
+                                    resolved = True
+                                    break
+
+        to_remove = []
+        for bullet in self.bullets:
+            if bullet.remaining_bounces == 0:
+                to_remove.append(bullet)
+
+        for bullet in to_remove:
+            self.bullets.remove(bullet)
 
         if not remove_collisions:
             invincibility = self.pause_menu.cheats[INVINCIBILITY]
@@ -781,6 +879,7 @@ class GameLogic(Interface):
                         and ghost.hitbox.collides_with(self.player.hitbox):
                     self.death_event()
                     break
+
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -896,7 +995,9 @@ class GameLogic(Interface):
         pac_color_r = PACMAN_LIGHT_COLOR_R
         pac_color_g = PACMAN_LIGHT_COLOR_G
         pac_color_b = PACMAN_LIGHT_COLOR_B
-        time_left = SUPER_PACGUM_TIME - (time.time() - self.last_super_pacgum)
+        time_left = SUPER_PACGUM_TIME - (
+            self.get_game_time() - self.last_super_pacgum
+        )
 
         if time_left < LIGHT_FADE_TIME:
             fade = max(0.0, time_left / LIGHT_FADE_TIME)
@@ -979,7 +1080,7 @@ class GameLogic(Interface):
         if not self.paused:
             self.handle_events(mouse_angle)
 
-        if time.time() - self.last_super_pacgum > SUPER_PACGUM_TIME:
+        if self.get_game_time() - self.last_super_pacgum > SUPER_PACGUM_TIME:
             self.super_pacgum_state = False
 
         self.draw_floor()
@@ -994,11 +1095,10 @@ class GameLogic(Interface):
         self.draw_ghosts()
 
         for bullet in self.bullets:
-            pr.draw_circle(int(bullet.center_x),
-                           int(bullet.center_y),
+            pr.draw_circle(int(bullet.center_x + CENTER_X),
+                           int(bullet.center_y + CENTER_Y),
                            int(bullet.radius),
                            pr.RED)
-            bullet.update()
 
         if self.super_pacgum_state or \
                 self.pause_menu.cheats[AK47_ALWAYS_ACTIVE]:
