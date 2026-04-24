@@ -18,9 +18,11 @@ from .Constants import (
     GAME_LOGIC,
     BULLET_SPEED,
     BULLET_RADIUS,
+    BULLET_FIRE_RATE,
     GAME_OVER,
     AK47_ALWAYS_ACTIVE,
     INVINCIBILITY,
+    NB_BOUNCES,
     REMOVE_COLLISIONS,
     FREEZE_GHOSTS,
     BONUS_LIVES,
@@ -31,7 +33,7 @@ from .Constants import (
     LIGHT_FADE_TIME,
     PACMAN_SPRITE_QUALITY,
     AK47_SPRITE_QUALITY,
-    SUPER_PACGUM_TIME,
+    SUPER_PACGUM_TIME
 )
 
 WALL_WIDTH = 3
@@ -128,6 +130,7 @@ class GameLogic(Interface):
         self.remove_collisions_active = False
         self.super_pacgum_state = False
         self.last_super_pacgum = 0.0
+        self.last_bullet = 0.0
         self._init_raytracing()
         self.points: list[CircleBox] = self.create_points()
         self.super_pacgums: list[CircleBox] = self.create_super_pacgums()
@@ -748,16 +751,26 @@ class GameLogic(Interface):
 
         left_click = pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT)
 
-        if ak47_active and left_click:
+        nb_bounces = self.pause_menu.cheats[NB_BOUNCES]
+        if BULLET_FIRE_RATE > 0:
+            bullet_rate = 1 / BULLET_FIRE_RATE
+        else:
+            bullet_rate = 0
+
+        bullet_ready = self.get_game_time() - self.last_bullet > bullet_rate
+        if ak47_active and left_click and \
+                bullet_ready:
             self.bullets.append(
                 Bullet(
                     self.player.x,
                     self.player.y,
                     BULLET_RADIUS,
                     mouse_angle_deg,
-                    BULLET_SPEED
+                    BULLET_SPEED,
+                    bounces=nb_bounces
                 )
             )
+            self.last_bullet = self.get_game_time()
         if right:
             self.player.try_direction = (SPEED, 0)
             if remove_collisions or self.can_move_direction(SPEED, 0):
@@ -879,7 +892,6 @@ class GameLogic(Interface):
                         and ghost.hitbox.collides_with(self.player.hitbox):
                     self.death_event()
                     break
-
 
     def update_radius(self) -> float:
         return min(self.scale_x, self.scale_y) // 2.5
@@ -1094,11 +1106,12 @@ class GameLogic(Interface):
 
         self.draw_ghosts()
 
+        bullet_color = pr.Color(195, 140, 65, 255)
         for bullet in self.bullets:
             pr.draw_circle(int(bullet.center_x + CENTER_X),
                            int(bullet.center_y + CENTER_Y),
                            int(bullet.radius),
-                           pr.RED)
+                           bullet_color)
 
         if self.super_pacgum_state or \
                 self.pause_menu.cheats[AK47_ALWAYS_ACTIVE]:

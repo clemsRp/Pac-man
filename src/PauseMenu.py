@@ -6,7 +6,8 @@ from .Constants import (PAUSE_MENU,
                         LEVEL_SKIP,
                         FREEZE_GHOSTS,
                         BONUS_LIVES,
-                        AK47_ALWAYS_ACTIVE)
+                        AK47_ALWAYS_ACTIVE,
+                        NB_BOUNCES)
 import pyray as pr
 
 
@@ -52,8 +53,9 @@ class PauseMenu(Interface):
                                               REMOVE_COLLISIONS: False,
                                               LEVEL_SKIP: False,
                                               FREEZE_GHOSTS: False,
+                                              AK47_ALWAYS_ACTIVE: False,
                                               BONUS_LIVES: 0,
-                                              AK47_ALWAYS_ACTIVE: False}
+                                              NB_BOUNCES: 3}
         self.add_button(resume_button)
 
         checkbox_texts = [
@@ -65,14 +67,15 @@ class PauseMenu(Interface):
         ]
 
         spinner_texts = [
-            BONUS_LIVES
+            (BONUS_LIVES, 0, 100, 0),
+            (NB_BOUNCES, 1, 99999, 3)
         ]
 
         checkbox_size = 50
         start_y = int(self.menu_y + 100)
         box_x = int(self.menu_x + self.menu_width - 100)
 
-        for _, text in enumerate(checkbox_texts):
+        for text in checkbox_texts:
             checkbox_sep_size = checkbox_size + 30
             cb = Checkbox(box_x,
                           start_y,
@@ -85,16 +88,17 @@ class PauseMenu(Interface):
         spinner_width = 130
         spinner_height = 50
         box_x = int(self.menu_x + self.menu_width - spinner_width - 50)
-        for _, text in enumerate(spinner_texts):
+        for text, min_val, max_val, default in spinner_texts:
             spinner_sep_size = spinner_height + 30
+
             sp = Spinner(box_x,
                          start_y,
                          spinner_width,
                          spinner_height,
                          text,
-                         0,
-                         100,
-                         0,
+                         min_val,
+                         max_val,
+                         default,
                          pr.RAYWHITE)
             self.add_spinner(sp, text)
             start_y += spinner_sep_size
@@ -102,7 +106,7 @@ class PauseMenu(Interface):
         # Calculate bounding box for the cheats frame
         max_cb_width = max(pr.measure_text(t, checkbox_size) for t
                            in checkbox_texts)
-        max_sp_width = max(pr.measure_text(t, spinner_height) for t
+        max_sp_width = max(pr.measure_text(t[0], spinner_height) for t
                            in spinner_texts)
 
         cb_left = int(self.menu_x + self.menu_width - 100) - max_cb_width - 10

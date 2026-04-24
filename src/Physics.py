@@ -63,7 +63,10 @@ class CircleBox(CollisionBox):
 
 class Bullet(CircleBox):
     def __init__(self, center_x: float, center_y: float,
-                 radius: float, angle: float = 0.0, speed: float = 10.0, bounces: int = 3):
+                 radius: float,
+                 angle: float = 0.0,
+                 speed: float = 10.0,
+                 bounces: int = 3):
         super().__init__(center_x, center_y, radius)
         self.angle = radians(angle)
         self.speed = speed
