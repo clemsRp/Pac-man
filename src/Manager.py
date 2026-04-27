@@ -65,9 +65,8 @@ class GameManager:
                 selected_level = self.interfaces[
                                                 LEVEL_SELECTION].selected_level
                 if selected_level:
-                    new_maze = MazeGenerator((selected_level["width"],
-                                              selected_level["height"]))
-                    self.interfaces[GAME_LOGIC].reinit_maze(new_maze)
+                    new_maze = MazeGenerator((selected_level["width"], selected_level["height"]))
+                    self.interfaces[GAME_LOGIC].reset(new_maze)
 
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
                 self.interfaces[interface_result].life = self.config["lives"]

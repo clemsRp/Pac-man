@@ -203,7 +203,7 @@ class GameOver(Interface):
             pr.WHITE
         )
 
-    def draw_pseudo(self):
+    def draw_pseudo(self) -> None:
         # draw box
 
         border: int = 7

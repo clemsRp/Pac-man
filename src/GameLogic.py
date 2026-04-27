@@ -142,7 +142,11 @@ class GameLogic(Interface):
         self.config: dict[str, Any] = config
         self.current_level: int = 0
 
-    def reset(self):
+    def reset(self, maze: MazeGenerator = None):
+        global CENTER_X, CENTER_Y
+        if maze is not None:
+            self.maze = maze
+        
         self.grid = self.maze.maze
         self.maze_height = len(self.grid)
         self.maze_width = len(self.grid[0])
@@ -151,6 +155,7 @@ class GameLogic(Interface):
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
+        
         self.buttons = []
         buttons_width = 300
         buttons_height = 50
@@ -191,11 +196,10 @@ class GameLogic(Interface):
         self.collision_boxs = self.create_collision_boxs()
 
         self.bullets = []
-
+        SIZE_PACMAN = self.update_radius()
         hitbox_w = self.scale_x - 2 * WALL_WIDTH
         hitbox_h = self.scale_y - 2 * WALL_WIDTH
         is_pair = (self.maze_width % 2 + 1) % 2
-        SIZE_PACMAN = self.update_radius()
         self.player = Player(
             int(
                 (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
@@ -208,18 +212,12 @@ class GameLogic(Interface):
             hitbox_h
         )
 
-        self.ghosts = []
-        self.remove_collisions_active = False
-        self.super_pacgum_state = False
-        self.last_super_pacgum = 0.0
-        self.last_bullet = 0.0
         self._init_raytracing()
         self.points = self.create_points()
         self.super_pacgums = self.create_super_pacgums()
 
-    def change_level(self, maze_gen: MazeGenerator):
-        self.maze = maze_gen
-        self.reset()
+        if hasattr(self, "assets") and self.assets:
+            self.set_assets(self.assets)
 
     def get_game_time(self) -> float:
         """Return a pause-aware game time in seconds."""
@@ -492,58 +490,6 @@ class GameLogic(Interface):
         self.light_pos_loc = pr.get_shader_location(self.shader, "lightPos")
         self.radius_loc = pr.get_shader_location(self.shader, "radius")
         self.color_loc = pr.get_shader_location(self.shader, "lightColor")
-
-    def reinit_maze(self, maze: MazeGenerator):
-        global CENTER_X, CENTER_Y
-        self.maze = maze
-        self.grid = self.maze.maze
-        self.maze_height = len(self.grid)
-        self.maze_width = len(self.grid[0])
-
-        self.scale_x = self.screen_width / self.maze_width
-        self.scale_y = self.screen_height / self.maze_height
-        self.scale_x = min([self.scale_x, self.scale_y])
-        self.scale_x -= self.scale_x % 2
-        self.scale_y = self.scale_x
-
-        CENTER_X = int(
-            (
-                self.screen_width - self.scale_x * self.maze_width
-            ) / 2
-        )
-        CENTER_Y = int(
-            (
-                self.screen_height - self.scale_y * self.maze_height
-            ) / 2
-        )
-
-        CENTER_X -= CENTER_X % 10
-        CENTER_Y -= CENTER_Y % 10
-
-        self.collision_boxs = self.create_collision_boxs()
-
-        SIZE_PACMAN = self.update_radius()
-        hitbox_w = self.scale_x - 2 * WALL_WIDTH
-        hitbox_h = self.scale_y - 2 * WALL_WIDTH
-        is_pair = (self.maze_width % 2 + 1) % 2
-        self.player = Player(
-            int(
-                (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
-            ),
-            int(
-                (0.5 + self.maze_height // 2) * self.scale_y
-            ),
-            SIZE_PACMAN,
-            hitbox_w,
-            hitbox_h
-        )
-
-        self._init_raytracing()
-        self.points = self.create_points()
-        self.super_pacgums = self.create_super_pacgums()
-
-        if self.assets:
-            self.set_assets(self.assets)
 
     def create_points(self) -> list[CircleBox]:
         points = []
