@@ -4,6 +4,7 @@ import time
 from .Interfaces import Interface
 from .parser import Parser
 import pyray as pr
+from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import (
     EXIT, PACMAN_SPRITE_QUALITY,
@@ -16,7 +17,9 @@ class GameManager:
 
     def __init__(
                 self, maze: MazeGenerator,
-                parser: Parser, config_file: str
+                parser: Parser,
+                config: dict[str, Any],
+                config_file: str
             ) -> None:
 
         self.maze: MazeGenerator = maze
@@ -33,6 +36,7 @@ class GameManager:
         self.speed = 2.0
         self.state = ""
         self.assets: dict = {}
+        self.config: dict[str, Any] = config
 
     def add_interface(self, name: str, interface: Interface) -> None:
         """This function adds an interface to the manager"""
@@ -66,7 +70,7 @@ class GameManager:
                     self.interfaces[GAME_LOGIC].reinit_maze(new_maze)
 
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
-                self.interfaces[interface_result].life = 3
+                self.interfaces[interface_result].life = self.config["lives"]
                 self.interfaces[interface_result].t_start = time.time()
                 self.interfaces[interface_result].score = 0
                 self.interfaces[interface_result].points = (
@@ -112,8 +116,6 @@ class GameManager:
         if height < min_height:
             height = min_height
 
-        print(width, height)
-
         pr.init_window(width, height, "Pac-Man")
         pr.gui_load_style("pacman_style.rgs")
         pr.set_target_fps(300)
@@ -122,7 +124,6 @@ class GameManager:
 
         self.window_width = pr.get_monitor_width(monitor)
         self.window_height = pr.get_monitor_height(monitor) - 100
-
         self.scale_x = self.window_width / self.maze_width
         self.scale_y = self.window_height / self.maze_height
         self.scale_x = min([self.scale_x, self.scale_y])

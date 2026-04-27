@@ -2,6 +2,7 @@ import pyray as pr
 import time
 import numpy as np
 from math import atan2
+from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox, Bullet
 from .PauseMenu import PauseMenu
@@ -49,7 +50,7 @@ CENTER_Y = 0
 class GameLogic(Interface):
     def __init__(
         self,
-        maze: MazeGenerator,
+        maze: MazeGenerator, config: dict[str, Any],
         screen_width: int, screen_height: int
     ):
         global CENTER_X, CENTER_Y
@@ -87,7 +88,7 @@ class GameLogic(Interface):
         self.pause_started_at: float | None = None
 
         self.score = 0
-        self.life = 3
+        self.life = int(config["lives"])
 
         self.t_start = 0.0
 
@@ -137,6 +138,88 @@ class GameLogic(Interface):
         self._init_raytracing()
         self.points: list[CircleBox] = self.create_points()
         self.super_pacgums: list[CircleBox] = self.create_super_pacgums()
+
+        self.config: dict[str, Any] = config
+        self.current_level: int = 0
+
+    def reset(self):
+        self.grid = self.maze.maze
+        self.maze_height = len(self.grid)
+        self.maze_width = len(self.grid[0])
+        self.scale_x = self.screen_width / self.maze_width
+        self.scale_y = self.screen_height / self.maze_height
+        self.scale_x = min([self.scale_x, self.scale_y])
+        self.scale_x -= self.scale_x % 2
+        self.scale_y = self.scale_x
+        self.buttons = []
+        buttons_width = 300
+        buttons_height = 50
+        window_offset = 40
+        pause_button_x = int(self.screen_width - buttons_width - window_offset)
+        pause_button_y = int(window_offset)
+        pause_button = Button(pause_button_x,
+                              pause_button_y,
+                              buttons_width,
+                              buttons_height,
+                              "Pause Game",
+                              color=pr.GRAY,
+                              triggered_function=self.pause_action)
+        self.add_button(pause_button)
+        self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
+        self.paused = False
+        self.total_paused_time = 0.0
+        self.pause_started_at: float | None = None
+
+        self.score = 0
+        self.life = 3
+
+        self.t_start = 0.0
+        CENTER_X = int(
+            (
+                self.screen_width - self.scale_x * self.maze_width
+            ) / 2
+        )
+        CENTER_Y = int(
+            (
+                self.screen_height - self.scale_y * self.maze_height
+            ) / 2
+        )
+
+        CENTER_X -= CENTER_X % 10
+        CENTER_Y -= CENTER_Y % 10
+
+        self.collision_boxs = self.create_collision_boxs()
+
+        self.bullets = []
+
+        hitbox_w = self.scale_x - 2 * WALL_WIDTH
+        hitbox_h = self.scale_y - 2 * WALL_WIDTH
+        is_pair = (self.maze_width % 2 + 1) % 2
+        SIZE_PACMAN = self.update_radius()
+        self.player = Player(
+            int(
+                (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
+            ),
+            int(
+                (0.5 + self.maze_height // 2) * self.scale_y
+            ),
+            SIZE_PACMAN,
+            hitbox_w,
+            hitbox_h
+        )
+
+        self.ghosts = []
+        self.remove_collisions_active = False
+        self.super_pacgum_state = False
+        self.last_super_pacgum = 0.0
+        self.last_bullet = 0.0
+        self._init_raytracing()
+        self.points = self.create_points()
+        self.super_pacgums = self.create_super_pacgums()
+
+    def change_level(self, maze_gen: MazeGenerator):
+        self.maze = maze_gen
+        self.reset()
 
     def get_game_time(self) -> float:
         """Return a pause-aware game time in seconds."""
@@ -888,12 +971,13 @@ class GameLogic(Interface):
 
         for point in self.points:
             if point.collides_with(self.player.hitbox):
-                self.score += 10
+                self.score += self.config["points_per_pacgum"]
                 self.points.remove(point)
                 break
 
         for pacgum in self.super_pacgums:
             if pacgum.collides_with(self.player.hitbox):
+                self.score += self.config["points_per_super_pacgum"]
                 self.super_pacgum_state = True
                 self.super_pacgums.remove(pacgum)
                 self.last_super_pacgum = self.get_game_time()
@@ -1223,10 +1307,13 @@ class GameLogic(Interface):
             if pause_menu_result == GAME_LOGIC:
                 self.resume_game()
 
+        texture = self.assets["pacman"][1]
+        scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
+
         pr.draw_text(
             "Score: " + str(self.score),
             15,
-            15,
+            15 + int(texture.height * scale),
             20, pr.WHITE
         )
 
@@ -1235,9 +1322,6 @@ class GameLogic(Interface):
         bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
 
         for k in range(self.life + bonus_lives):
-            texture = self.assets["pacman"][1]
-            scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
-
             pr.draw_texture_pro(
                 texture,
                 pr.Rectangle(0, 0, texture.width, texture.height),
@@ -1254,6 +1338,17 @@ class GameLogic(Interface):
                 0,
                 pr.WHITE
             )
+
+        if len(self.points) + len(self.super_pacgums) == 0:
+            self.current_level += 1
+            if self.current_level >= 10:
+                return GAME_OVER
+
+            size: tuple[int, int] = (
+                self.config["levels"][self.current_level]["width"],
+                self.config["levels"][self.current_level]["height"]
+            )
+            self.change_level(MazeGenerator(size))
 
         if self.life + bonus_lives < 0:
             if not self.paused:
