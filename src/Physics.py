@@ -1,5 +1,5 @@
-
 from abc import ABC, abstractmethod
+from math import sin, cos, radians
 
 
 class CollisionBox(ABC):
@@ -59,3 +59,22 @@ class CircleBox(CollisionBox):
             return (dx * dx + dy * dy) < (self.radius * self.radius)
         else:
             raise TypeError("Unknown collision box type")
+
+
+class Bullet(CircleBox):
+    def __init__(self, center_x: float, center_y: float,
+                 radius: float,
+                 angle: float = 0.0,
+                 speed: float = 10.0,
+                 bounces: int = 3):
+        super().__init__(center_x, center_y, radius)
+        self.angle = radians(angle)
+        self.speed = speed
+        self.remaining_bounces = bounces
+
+    def update(self) -> None:
+        x = self.center_x + self.speed * cos(self.angle)
+        y = self.center_y + self.speed * sin(self.angle)
+
+        self.center_x = x
+        self.center_y = y

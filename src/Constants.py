@@ -4,11 +4,24 @@ SOUTH = 0b0100
 WEST = 0b1000
 
 SPEED = 2.0
+BULLET_SPEED = 3.0
+BULLET_FIRE_RATE = 5
+BULLET_RADIUS = 8.0
+AK47_FREEZE_TIME = 3.0
 
 GAME_LOGIC = "gamelogic"
 GAME_OVER = "gameover"
 MAIN_MENU = "mainmenu"
 EXIT = "exit"
+PAUSE_MENU = "pausemenu"
+
+INVINCIBILITY = "invincibility"
+REMOVE_COLLISIONS = "remove_collisions"
+LEVEL_SKIP = "level_skip"
+FREEZE_GHOSTS = "freeze_ghosts"
+BONUS_LIVES = "bonus_lives"
+AK47_ALWAYS_ACTIVE = "AK47_always_active"
+NB_BOUNCES = "nb_bounces"
 
 DELTA: dict[int, tuple[int, int]] = {
     NORTH: (-1, 0),
@@ -16,6 +29,17 @@ DELTA: dict[int, tuple[int, int]] = {
     WEST: (0, -1),
     EAST: (0, 1),
 }
+
+PACMAN_LIGHT_COLOR_R = 255
+PACMAN_LIGHT_COLOR_G = 255
+PACMAN_LIGHT_COLOR_B = 0
+PACMAN_LIGHT_RADIUS = 200
+
 MAX_SCORES_SHOWN = 10
 PACMAN_SPRITE_QUALITY = 512
+AK47_SPRITE_QUALITY = 1024
 GHOST_SPRITE_QUALITY = 64
+
+
+SUPER_PACGUM_TIME = 9.0
+LIGHT_FADE_TIME = 1.0
