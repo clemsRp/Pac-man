@@ -5,13 +5,14 @@ WEST = 0b1000
 
 SPEED = 2.0
 BULLET_SPEED = 3.0
-BULLET_FIRE_RATE = 5000
+BULLET_FIRE_RATE = 10
 BULLET_RADIUS = 8.0
 AK47_FREEZE_TIME = 3.0
 
 GAME_LOGIC = "gamelogic"
 GAME_OVER = "gameover"
 MAIN_MENU = "mainmenu"
+LEVEL_SELECTION = "levelselection"
 EXIT = "exit"
 PAUSE_MENU = "pausemenu"
 

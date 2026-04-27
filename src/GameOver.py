@@ -185,20 +185,6 @@ class GameOver(Interface):
             pr.WHITE
         )
 
-    def draw_score_rank(self) -> None:
-        text1: str = f"Score: {self.score}, Rank: {self.rank}"
-        center_text1 = pr.measure_text(
-            text1, FONT_SIZE
-        )
-
-        pr.draw_text(
-            text1,
-            int(0.5 * self.screen_width - center_text1 / 2),
-            int(0.5 * self.screen_height - 0.7 * FONT_SIZE),
-            FONT_SIZE,
-            pr.WHITE
-        )
-
         percent_rank = round(
             self.rank / len(self.all_scores) * 100,
             1

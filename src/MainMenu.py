@@ -1,5 +1,5 @@
 from .Interfaces import Interface, Button
-from .Constants import MAIN_MENU, GAME_LOGIC
+from .Constants import MAIN_MENU, GAME_LOGIC, LEVEL_SELECTION
 from .Constants import EXIT, MAX_SCORES_SHOWN
 from .Constants import PACMAN_SPRITE_QUALITY
 from .Physics import CollisionBox, CircleBox
@@ -53,6 +53,7 @@ class MainMenu(Interface):
         self.add_button(exit_button)
 
     def compute_scores(self) -> None:
+        """computes the scores of the players to show it in the leaderboard"""
         self.scores = self.parser.get_scores().get("players", [])
         self.scores = sorted(self.scores,
                              key=lambda x: x["score"],
@@ -75,6 +76,7 @@ class MainMenu(Interface):
             self.best_player_score = 0
 
     def reset_pacman(self):
+        """resets the pacman in the background of the main menu so it restarts"""
         self.background_pacman.x = -self.background_pacman.radius
         self.background_pacman.y = self.background_pacman.radius
         self.direction = "right"
@@ -82,6 +84,7 @@ class MainMenu(Interface):
             self.background_pacman.y, self.window_width)
 
     def update_background_pacman(self):
+        """updates the pacman in the background of the main menu"""
         # Wait until points are fully animated before moving
         nb_points_to_show = int(
             (pr.get_time() -
@@ -119,6 +122,7 @@ class MainMenu(Interface):
         self.check_points_collision()
 
     def check_points_collision(self) -> None:
+        """checks if the points collide with the pacman"""
         if self.direction == "right":
             to_remove = [i for i in self.background_points if
                          i.center_x <= self.background_pacman.x]
@@ -130,6 +134,7 @@ class MainMenu(Interface):
                                   i not in to_remove]
 
     def create_points(self, y: int, width: int) -> list[CollisionBox]:
+        """creates the points in the background of the main menu"""
         radius = self.background_pacman.radius
         cell_size = radius * 2
         nb_points = int(width // cell_size) + 2
@@ -143,6 +148,7 @@ class MainMenu(Interface):
         return points
 
     def get_direciton_from_str(self, direc: str) -> int:
+        """returns the direction as an int"""
         direc = direc.lower()
         if direc == "right":
             return 1
@@ -152,6 +158,8 @@ class MainMenu(Interface):
             raise ValueError("Invalid direction")
 
     def get_n_first_points(self, n: int, direction: str) -> list[CollisionBox]:
+        """returns the first n points that need
+            to be drawn in the background of the main menu"""
         if direction == "right":
             points = sorted(self.background_points,
                             key=lambda x: x.center_x)
@@ -161,6 +169,7 @@ class MainMenu(Interface):
         return points[:n]
 
     def draw_background_points(self):
+        """draws the points in the background of the main menu"""
         nb_points_to_show = int((pr.get_time() -
                                  self.last_create_points_time) /
                                 self.time_between_points_creation)
@@ -172,6 +181,7 @@ class MainMenu(Interface):
             pr.draw_circle(int(cx), int(cy), 23, pr.WHITE)
 
     def draw_background_pacman(self):
+        """draws the animated pacman in the background of the main menu"""
         nb_points_to_show = int(
             (pr.get_time() -
              self.last_create_points_time) /
@@ -204,7 +214,8 @@ class MainMenu(Interface):
             )
 
     def start_game(self):
-        self.next_state = GAME_LOGIC
+        """starts the game, goes to the level selection menu"""
+        self.next_state = LEVEL_SELECTION
 
     def update(self) -> str:
         self.update_background_pacman()
@@ -214,7 +225,7 @@ class MainMenu(Interface):
         self.draw_leaderboard()
         return self.next_state
 
-    def draw_leaderboard(self):
+    def draw_leaderboard(self) -> None:
         """Dessine le tableau des
         scores avec des dimensions et polices agrandies"""
 

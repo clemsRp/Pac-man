@@ -52,7 +52,7 @@ class GameLogic(Interface):
         maze: MazeGenerator,
         screen_width: int, screen_height: int
     ):
-        global CENTER_X, CENTER_Y, SPEED
+        global CENTER_X, CENTER_Y
         super().__init__()
         self.maze: MazeGenerator = maze
         self.grid: list[list[int]] = self.maze.maze
@@ -386,6 +386,11 @@ class GameLogic(Interface):
 
     def _init_raytracing(self):
         """initializes GPU ray tracing by creating wallmap texture"""
+        if hasattr(self, "wallmap_texture"):
+            pr.unload_texture(self.wallmap_texture)
+        if hasattr(self, "shader"):
+            pr.unload_shader(self.shader)
+
         self._wallmap = np.ascontiguousarray(self._build_wallmap())
         height, width = self._wallmap.shape
 
@@ -404,6 +409,58 @@ class GameLogic(Interface):
         self.light_pos_loc = pr.get_shader_location(self.shader, "lightPos")
         self.radius_loc = pr.get_shader_location(self.shader, "radius")
         self.color_loc = pr.get_shader_location(self.shader, "lightColor")
+
+    def reinit_maze(self, maze: MazeGenerator):
+        global CENTER_X, CENTER_Y
+        self.maze = maze
+        self.grid = self.maze.maze
+        self.maze_height = len(self.grid)
+        self.maze_width = len(self.grid[0])
+
+        self.scale_x = self.screen_width / self.maze_width
+        self.scale_y = self.screen_height / self.maze_height
+        self.scale_x = min([self.scale_x, self.scale_y])
+        self.scale_x -= self.scale_x % 2
+        self.scale_y = self.scale_x
+
+        CENTER_X = int(
+            (
+                self.screen_width - self.scale_x * self.maze_width
+            ) / 2
+        )
+        CENTER_Y = int(
+            (
+                self.screen_height - self.scale_y * self.maze_height
+            ) / 2
+        )
+
+        CENTER_X -= CENTER_X % 10
+        CENTER_Y -= CENTER_Y % 10
+
+        self.collision_boxs = self.create_collision_boxs()
+
+        SIZE_PACMAN = self.update_radius()
+        hitbox_w = self.scale_x - 2 * WALL_WIDTH
+        hitbox_h = self.scale_y - 2 * WALL_WIDTH
+        is_pair = (self.maze_width % 2 + 1) % 2
+        self.player = Player(
+            int(
+                (0.5 + self.maze_width // 2 - is_pair) * self.scale_x
+            ),
+            int(
+                (0.5 + self.maze_height // 2) * self.scale_y
+            ),
+            SIZE_PACMAN,
+            hitbox_w,
+            hitbox_h
+        )
+
+        self._init_raytracing()
+        self.points = self.create_points()
+        self.super_pacgums = self.create_super_pacgums()
+
+        if self.assets:
+            self.set_assets(self.assets)
 
     def create_points(self) -> list[CircleBox]:
         points = []

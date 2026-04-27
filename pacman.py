@@ -5,6 +5,7 @@ from mazegenerator.mazegenerator import MazeGenerator
 from src.GameLogic import GameLogic
 from src.GameOver import GameOver
 from src.MainMenu import MainMenu
+from src.LevelSelectionMenu import LevelSelectionMenu
 import pyray as pr
 if __name__ == "__main__":
 
@@ -35,6 +36,11 @@ if __name__ == "__main__":
                              parser)
         main_menu.set_assets(game_manager.assets)
 
+        level_selection = LevelSelectionMenu(window_width,
+                                             window_height,
+                                             parser)
+        level_selection.set_assets(game_manager.assets)
+
         game_logic = GameLogic(maze_gen, window_width, window_height)
 
         game_over = GameOver(
@@ -46,6 +52,8 @@ if __name__ == "__main__":
                                    game_logic)
         game_manager.add_interface("mainmenu",
                                    main_menu)
+        game_manager.add_interface("levelselection",
+                                   level_selection)
         game_manager.add_interface("gameover",
                                    game_over)
 

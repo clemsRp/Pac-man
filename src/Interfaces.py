@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 from pyray import ffi
 
+
 class Checkbox:
     def __init__(self,
                  x: int,

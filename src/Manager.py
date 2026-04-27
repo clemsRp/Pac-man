@@ -7,7 +7,7 @@ import pyray as pr
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import (
     EXIT, PACMAN_SPRITE_QUALITY,
-    GAME_LOGIC, MAIN_MENU, GAME_OVER
+    GAME_LOGIC, MAIN_MENU, GAME_OVER, LEVEL_SELECTION
 )
 
 
@@ -56,6 +56,14 @@ class GameManager:
 
             if interface_result == EXIT:
                 break
+
+            if self.state == LEVEL_SELECTION and interface_result == GAME_LOGIC:
+                selected_level = self.interfaces[
+                                                LEVEL_SELECTION].selected_level
+                if selected_level:
+                    new_maze = MazeGenerator((selected_level["width"],
+                                              selected_level["height"]))
+                    self.interfaces[GAME_LOGIC].reinit_maze(new_maze)
 
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
                 self.interfaces[interface_result].life = 3
@@ -115,8 +123,8 @@ class GameManager:
         self.window_width = pr.get_monitor_width(monitor)
         self.window_height = pr.get_monitor_height(monitor) - 100
 
-        self.scale_x: float = self.window_width / self.maze_width
-        self.scale_y: float = self.window_height / self.maze_height
+        self.scale_x = self.window_width / self.maze_width
+        self.scale_y = self.window_height / self.maze_height
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
