@@ -97,7 +97,6 @@ class Parser:
             "highscore_filename",
             "levels",
             "lives",
-            "pacgum",
             "points_per_pacgum",
             "points_per_super_pacgum",
             "points_per_ghost",

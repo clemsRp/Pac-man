@@ -17,7 +17,12 @@ if __name__ == "__main__":
         window_width = 1000
         window_height = 800
 
-        game_manager = GameManager(maze_gen, parser, "config.json")
+        game_manager = GameManager(
+            maze_gen,
+            parser,
+            parser.get_config(),
+            "config.json"
+        )
 
         # get the maximum window size
         window_width, window_height = game_manager.create_window(
@@ -35,7 +40,10 @@ if __name__ == "__main__":
                              parser)
         main_menu.set_assets(game_manager.assets)
 
-        game_logic = GameLogic(maze_gen, window_width, window_height)
+        game_logic = GameLogic(
+            maze_gen, parser.get_config(),
+            window_width, window_height
+        )
 
         game_over = GameOver(
             window_width, window_height,
