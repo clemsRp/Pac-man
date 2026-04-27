@@ -1168,7 +1168,7 @@ class GameLogic(Interface):
 
         pr.draw_text(
             "Score: " + str(self.score),
-            pos_x,
+            15,
             15,
             20, pr.WHITE
         )
