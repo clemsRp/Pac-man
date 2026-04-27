@@ -29,12 +29,13 @@ class Ghost:
 
         self.direction: tuple[int, int] = (0, 0)
         self.try_direction: tuple[int, int] = (0, 0)
+        self.last_frozen: float = 0.0
 
     def move(
-                self, maze: MazeGenerator,
-                player_x: int, player_y: int,
-                scale_x: int, scale_y: int
-            ):
+        self, maze: MazeGenerator,
+        player_x: int, player_y: int,
+        scale_x: int, scale_y: int
+    ):
         px = int((player_x - player_x % scale_x) / scale_x)
         py = int((player_y - player_y % scale_y) / scale_y)
 
@@ -68,3 +69,6 @@ class Ghost:
 
         self.box.x = self.x - self.box.width // 2
         self.box.y = self.y - self.box.height // 2
+
+    def freeze(self, current_time: float):
+        self.last_frozen = current_time

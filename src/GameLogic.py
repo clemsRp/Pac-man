@@ -33,7 +33,8 @@ from .Constants import (
     LIGHT_FADE_TIME,
     PACMAN_SPRITE_QUALITY,
     AK47_SPRITE_QUALITY,
-    SUPER_PACGUM_TIME
+    SUPER_PACGUM_TIME,
+    AK47_FREEZE_TIME
 )
 
 WALL_WIDTH = 3
@@ -707,33 +708,37 @@ class GameLogic(Interface):
         # Ghosts
         if self.get_game_time() - self.t_start < 3:
             return
+
         for ghost in self.ghosts:
             if not freeze_ghosts:
-                ghost.move(
-                    self.grid,
-                    int(ghost_target_x),
-                    int(ghost_target_y),
-                    int(self.scale_x),
-                    int(self.scale_y)
-                )
+                can_move = self.get_game_time() - ghost.last_frozen > \
+                    AK47_FREEZE_TIME
+                if can_move:
+                    ghost.move(
+                        self.grid,
+                        int(ghost_target_x),
+                        int(ghost_target_y),
+                        int(self.scale_x),
+                        int(self.scale_y)
+                    )
 
-                add_ghost_x = ghost.direction[0]
-                add_ghost_y = ghost.direction[1]
+                    add_ghost_x = ghost.direction[0]
+                    add_ghost_y = ghost.direction[1]
 
-                if self.can_move_direction(
-                    ghost.try_direction[0],
-                    ghost.try_direction[1],
-                    ghost
-                ):
-                    ghost.direction = ghost.try_direction
-                    add_ghost_x = ghost.try_direction[0]
-                    add_ghost_y = ghost.try_direction[1]
+                    if self.can_move_direction(
+                        ghost.try_direction[0],
+                        ghost.try_direction[1],
+                        ghost
+                    ):
+                        ghost.direction = ghost.try_direction
+                        add_ghost_x = ghost.try_direction[0]
+                        add_ghost_y = ghost.try_direction[1]
 
-                self.collision_events(
-                    ghost.x + add_ghost_x,
-                    ghost.y + add_ghost_y,
-                    ghost
-                )
+                    self.collision_events(
+                        ghost.x + add_ghost_x,
+                        ghost.y + add_ghost_y,
+                        ghost
+                    )
 
         # Player
         right = pr.is_key_down(
@@ -881,6 +886,13 @@ class GameLogic(Interface):
         for bullet in self.bullets:
             if bullet.remaining_bounces == 0:
                 to_remove.append(bullet)
+                continue
+
+            for ghost in self.ghosts:
+                if bullet.collides_with(ghost.hitbox):
+                    ghost.freeze(self.get_game_time())
+                    to_remove.append(bullet)
+                    break
 
         for bullet in to_remove:
             self.bullets.remove(bullet)
