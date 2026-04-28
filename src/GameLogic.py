@@ -73,6 +73,11 @@ class GameLogic(Interface):
         buttons_height = 50
         window_offset = 40
 
+        self.game_duration: float = 0.0
+        self.level_start: float = 0.0
+        self.update_game_duration: bool = False
+        self.nb_wait: int = 0
+
         pause_button_x = int(self.screen_width - buttons_width - window_offset)
         pause_button_y = int(window_offset)
         pause_button = Button(pause_button_x,
@@ -294,7 +299,7 @@ class GameLogic(Interface):
                 self.assets["ghosts"]["blue_ghost"],
                 int(self.scale_x / 2),
                 int(self.scale_y / 2),
-                int(0.8 * self.scale_x),
+                int(0.45 * self.scale_x),
                 int(0.9 * self.scale_x),
                 int(0.9 * self.scale_x)
             ),
@@ -303,7 +308,7 @@ class GameLogic(Interface):
                 self.assets["ghosts"]["blue_ghost"],
                 int(self.scale_x / 2),
                 int((self.maze_height - 0.5) * self.scale_y),
-                int(0.8 * self.scale_x),
+                int(0.45 * self.scale_x),
                 int(0.9 * self.scale_x),
                 int(0.9 * self.scale_x)
             ),
@@ -312,7 +317,7 @@ class GameLogic(Interface):
                 self.assets["ghosts"]["blue_ghost"],
                 int((self.maze_width - 0.5) * self.scale_x),
                 int(self.scale_y / 2),
-                int(0.8 * self.scale_x),
+                int(0.45 * self.scale_x),
                 int(0.9 * self.scale_x),
                 int(0.9 * self.scale_x)
             ),
@@ -321,7 +326,7 @@ class GameLogic(Interface):
                 self.assets["ghosts"]["blue_ghost"],
                 int((self.maze_width - 0.5) * self.scale_x),
                 int((self.maze_height - 0.5) * self.scale_y),
-                int(0.8 * self.scale_x),
+                int(0.45 * self.scale_x),
                 int(0.9 * self.scale_x),
                 int(0.9 * self.scale_x)
             )
@@ -746,6 +751,7 @@ class GameLogic(Interface):
         return not collision_x and not collision_y
 
     def death_event(self) -> None:
+        self.nb_wait += 1
         self.life -= 1
 
         for ghost in self.ghosts:
@@ -808,7 +814,12 @@ class GameLogic(Interface):
             )
         # Ghosts
         if self.get_game_time() - self.t_start < 3:
+            self.update_game_duration = False
             return
+        elif self.level_start == 0.0:
+            self.level_start = self.get_game_time()
+            self.game_duration = 0.0
+        self.update_game_duration = True
 
         for ghost in self.ghosts:
             if not freeze_ghosts:
@@ -836,7 +847,8 @@ class GameLogic(Interface):
                         int(ghost_target_x),
                         int(ghost_target_y),
                         int(self.scale_x),
-                        int(self.scale_y)
+                        int(self.scale_y),
+                        self.super_pacgum_state
                     )
 
                     add_ghost_x = ghost.direction[0]
@@ -1099,15 +1111,15 @@ class GameLogic(Interface):
                 rotation,
                 pr.WHITE
             )
-        """ pr.draw_circle(int(self.player.x),
-                       int(self.player.y),
-                       int(self.player.radius),
-                       pr.YELLOW) """
-        """ pr.draw_rectangle(int(self.player.box.x),
-                          int(self.player.box.y),
+        """ pr.draw_rectangle(int(self.player.box.x) + CENTER_X,
+                          int(self.player.box.y) + CENTER_Y,
                           int(self.player.box.width),
                           int(self.player.box.height),
-                          pr.WHITE) """
+                          pr.WHITE)
+        pr.draw_circle(int(self.player.x) + CENTER_X,
+                       int(self.player.y) + CENTER_Y,
+                       int(self.player.radius),
+                       pr.YELLOW) """
 
     def draw_lighting(self):
         pr.begin_blend_mode(pr.BlendMode.BLEND_ADDITIVE)
@@ -1180,7 +1192,11 @@ class GameLogic(Interface):
 
     def draw_ghosts(self) -> None:
         for ghost in self.ghosts:
-            texture = ghost.ghost
+
+            if self.super_pacgum_state:
+                texture = ghost.blue_ghost
+            else:
+                texture = ghost.ghost
 
             # même logique que pacman
             scale = self.player.radius / (GHOST_SPRITE_QUALITY / 2)
@@ -1201,6 +1217,31 @@ class GameLogic(Interface):
                 0,
                 pr.WHITE
             )
+
+            """ pr.draw_rectangle(
+                int(
+                    ghost.box.x +
+                    CENTER_X
+                ),
+                int(
+                    ghost.box.y +
+                    CENTER_Y
+                ),
+                int(
+                    ghost.box.width
+                ),
+                int(
+                    ghost.box.height
+                ),
+                pr.WHITE
+            )
+
+            pr.draw_circle(
+                ghost.hitbox.center_x + CENTER_X,
+                ghost.hitbox.center_y + CENTER_Y,
+                ghost.hitbox.radius,
+                pr.YELLOW
+            ) """
 
     def get_angle_deg(self) -> float:
         mouse_pos = pr.get_mouse_position()
@@ -1241,6 +1282,14 @@ class GameLogic(Interface):
 
     def update(self) -> str:
         super().update()
+
+        if self.update_game_duration:
+            self.game_duration = self.get_game_time() - self.level_start
+            if self.level_start == 0.0:
+                self.game_duration = 0.0
+            if self.get_game_time() - self.t_start < 3:
+                self.game_duration -= pr.get_frame_time()
+
         mouse_angle = self.get_angle_deg()
         if not self.paused:
             self.handle_events(mouse_angle)
@@ -1286,6 +1335,20 @@ class GameLogic(Interface):
             20, pr.WHITE
         )
 
+        pr.draw_text(
+            f"Time: {abs(self.game_duration):.1f}",
+            15,
+            35 + int(texture.height * scale),
+            20, pr.WHITE
+        )
+
+        pr.draw_text(
+            "Max level time: " + str(self.config["level_max_time"]),
+            15,
+            55 + int(texture.height * scale),
+            20, pr.WHITE
+        )
+
         bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
 
         bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
@@ -1322,5 +1385,8 @@ class GameLogic(Interface):
         if self.life + bonus_lives < 0:
             if not self.paused:
                 return GAME_OVER
+
+        if self.game_duration > float(self.config["level_max_time"]):
+            return GAME_OVER
 
         return GAME_LOGIC

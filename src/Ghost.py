@@ -54,33 +54,38 @@ class Ghost:
     def move(
         self, maze: MazeGenerator,
         player_x: int, player_y: int,
-        scale_x: int, scale_y: int
+        scale_x: int, scale_y: int,
+        is_killable: bool
     ):
-        px = int((player_x - player_x % scale_x) / scale_x)
-        py = int((player_y - player_y % scale_y) / scale_y)
+        if is_killable:
+            pass
 
-        gx = int((self.x - self.x % scale_x) / scale_x)
-        gy = int((self.y - self.y % scale_y) / scale_y)
+        else:
+            px = int((player_x - player_x % scale_x) / scale_x)
+            py = int((player_y - player_y % scale_y) / scale_y)
 
-        new_maze = [
-            [~c for c in row] for row in maze
-        ]
+            gx = int((self.x - self.x % scale_x) / scale_x)
+            gy = int((self.y - self.y % scale_y) / scale_y)
 
-        if px == gx and py == gy:
-            return
+            new_maze = [
+                [~c for c in row] for row in maze
+            ]
 
-        path = find_path(
-            new_maze, (gy, gx), (py, px)
-        )[0]
+            if px == gx and py == gy:
+                return
 
-        dire_x = 0
-        dire_y = 0
+            path = find_path(
+                new_maze, (gy, gx), (py, px)
+            )[0]
 
-        if path is not None and len(path) > 1:
-            dire_x = path[1][1] - path[0][1]
-            dire_y = path[1][0] - path[0][0]
+            dire_x = 0
+            dire_y = 0
 
-        self.try_direction = (dire_x * SPEED, dire_y * SPEED)
+            if path is not None and len(path) > 1:
+                dire_x = path[1][1] - path[0][1]
+                dire_y = path[1][0] - path[0][0]
+
+            self.try_direction = (dire_x * SPEED, dire_y * SPEED)
 
     def update_collision_box(self):
         self.hitbox.center_x = self.x
