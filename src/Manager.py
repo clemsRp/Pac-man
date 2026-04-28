@@ -7,8 +7,8 @@ import pyray as pr
 from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import (
-    EXIT, PACMAN_SPRITE_QUALITY,
-    GAME_LOGIC, MAIN_MENU, GAME_OVER, LEVEL_SELECTION
+    EXIT, GAME_LOGIC, MAIN_MENU,
+    GAME_OVER, LEVEL_SELECTION
 )
 
 
@@ -61,11 +61,17 @@ class GameManager:
             if interface_result == EXIT:
                 break
 
-            if self.state == LEVEL_SELECTION and interface_result == GAME_LOGIC:
+            if self.state == LEVEL_SELECTION and \
+                    interface_result == GAME_LOGIC:
                 selected_level = self.interfaces[
                                                 LEVEL_SELECTION].selected_level
                 if selected_level:
-                    new_maze = MazeGenerator((selected_level["width"], selected_level["height"]))
+                    new_maze = MazeGenerator(
+                        (
+                            selected_level["width"],
+                            selected_level["height"]
+                        )
+                    )
                     self.interfaces[GAME_LOGIC].reset(new_maze)
 
             if self.state != GAME_LOGIC and interface_result == GAME_LOGIC:
@@ -75,6 +81,8 @@ class GameManager:
                 self.interfaces[interface_result].points = (
                     self.interfaces[interface_result].create_points()
                 )
+                self.interfaces[interface_result].game_duration = 0.0
+                self.interfaces[interface_result].level_start = 0.0
 
             if self.state != GAME_OVER and interface_result == GAME_OVER:
                 self.interfaces[interface_result].score = (
