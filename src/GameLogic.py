@@ -1034,9 +1034,15 @@ class GameLogic(Interface):
             for ghost in self.ghosts:
                 if ghost.hitbox.collides_with(self.player.hitbox):
                     if self.super_pacgum_state:
-                        ghost.set_destination(ghost.initial_x,
-                                              ghost.initial_y,
-                                              self.get_game_time())
+                        if freeze_ghosts:
+                            ghost.x = ghost.initial_x
+                            ghost.y = ghost.initial_y
+                            ghost.destination = None
+                            ghost.update_collision_box()
+                        else:
+                            ghost.set_destination(ghost.initial_x,
+                                                  ghost.initial_y,
+                                                  self.get_game_time())
                     elif not invincibility:
                         self.death_event()
                     break
