@@ -29,8 +29,8 @@ if __name__ == "__main__":
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
 
-        window_width = 1920 - 30
-        window_height = 1080 - 60
+        window_width = 1920
+        window_height = 1080 - 55
 
         game_manager.set_window_size(window_width,
                                      window_height)

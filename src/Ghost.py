@@ -3,11 +3,13 @@ from .Physics import CircleBox, RectangleBox, CollisionBox
 from mazegenerator.mazegenerator import MazeGenerator
 from .solve_maze import find_path
 from .Constants import SPEED
+import pyray as pr
 
 
 class Ghost:
     def __init__(self,
-                 ghost, blue_ghost,
+                 ghost: pr.Texture,
+                 blue_ghost: pr.Texture,
                  x: float = 60, y: float = 60,
                  radius: float = 30,
                  box_width: int = 60,
@@ -24,12 +26,30 @@ class Ghost:
             box_height
         )
 
+        self.initial_x = x
+        self.initial_y = y
+
         self.ghost = ghost
         self.blue_ghost = blue_ghost
 
         self.direction: tuple[int, int] = (0, 0)
         self.try_direction: tuple[int, int] = (0, 0)
         self.last_frozen: float = 0.0
+        self.death_time: float = 0.0
+        self.death_position: tuple[float, float] | None = None
+        self.destination: tuple[float, float] | None = None
+
+    def set_destination(self, x: float, y: float, game_time: float) -> None:
+        """set the destination of the ghost.
+        the ghost will have to go here without
+        any collision"""
+        self.destination = (x, y)
+        self.death_position = (self.x, self.y)
+        self.death_time = game_time
+        self.last_frozen = 0.0
+
+    def unlock_destination(self):
+        self.destination = None
 
     def move(
         self, maze: MazeGenerator,

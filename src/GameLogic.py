@@ -35,6 +35,7 @@ from .Constants import (
     PACMAN_SPRITE_QUALITY,
     AK47_SPRITE_QUALITY,
     SUPER_PACGUM_TIME,
+    GHOST_RETURN_SPAWN_TIME,
     AK47_FREEZE_TIME,
     GHOST_SPRITE_QUALITY
 )
@@ -146,7 +147,7 @@ class GameLogic(Interface):
         global CENTER_X, CENTER_Y
         if maze is not None:
             self.maze = maze
-        
+
         self.grid = self.maze.maze
         self.maze_height = len(self.grid)
         self.maze_width = len(self.grid[0])
@@ -155,7 +156,7 @@ class GameLogic(Interface):
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
-        
+
         self.buttons = []
         buttons_width = 300
         buttons_height = 50
@@ -746,24 +747,24 @@ class GameLogic(Interface):
 
     def death_event(self) -> None:
         self.life -= 1
+
+        for ghost in self.ghosts:
+            ghost.direction = (0, 0)
+            ghost.try_direction = (0, 0)
+            ghost.unlock_destination()
+
         self.ghosts[0].x = int(self.scale_x / 2)
         self.ghosts[0].y = int(self.scale_y / 2)
-        self.ghosts[0].direction = (0, 0)
-        self.ghosts[0].try_direction = (0, 0)
 
         self.ghosts[1].x = int(self.scale_x / 2)
         self.ghosts[1].y = int(
             (self.maze_height - 0.5) * self.scale_y
         )
-        self.ghosts[1].direction = (0, 0)
-        self.ghosts[1].try_direction = (0, 0)
 
         self.ghosts[2].x = int(
             (self.maze_width - 0.5) * self.scale_x
         )
         self.ghosts[2].y = int(self.scale_y / 2)
-        self.ghosts[2].direction = (0, 0)
-        self.ghosts[2].try_direction = (0, 0)
 
         self.ghosts[3].x = int(
             (self.maze_width - 0.5) * self.scale_x
@@ -771,8 +772,6 @@ class GameLogic(Interface):
         self.ghosts[3].y = int(
             (self.maze_height - 0.5) * self.scale_y
         )
-        self.ghosts[3].direction = (0, 0)
-        self.ghosts[3].try_direction = (0, 0)
 
         for ghost_to_reset in self.ghosts:
             ghost_to_reset.update_collision_box()
@@ -816,6 +815,22 @@ class GameLogic(Interface):
                 can_move = self.get_game_time() - ghost.last_frozen > \
                     AK47_FREEZE_TIME
                 if can_move:
+                    if ghost.destination is not None:
+                        time_elapsed = self.get_game_time() - ghost.death_time
+                        if time_elapsed >= GHOST_RETURN_SPAWN_TIME:
+                            ghost.x = ghost.destination[0]
+                            ghost.y = ghost.destination[1]
+                            ghost.destination = None
+                        else:
+                            ratio = time_elapsed / GHOST_RETURN_SPAWN_TIME
+                            ghost.x = ghost.death_position[0] + (
+                                ghost.destination[0] - ghost.death_position[0]
+                            ) * ratio
+                            ghost.y = ghost.death_position[1] + (
+                                ghost.destination[1] - ghost.death_position[1]
+                            ) * ratio
+                        ghost.update_collision_box()
+                        continue
                     ghost.move(
                         self.grid,
                         int(ghost_target_x),
@@ -992,6 +1007,8 @@ class GameLogic(Interface):
                 continue
 
             for ghost in self.ghosts:
+                if ghost.destination is not None:
+                    continue
                 if bullet.collides_with(ghost.hitbox):
                     ghost.freeze(self.get_game_time())
                     to_remove.append(bullet)
@@ -1003,17 +1020,23 @@ class GameLogic(Interface):
         if not remove_collisions:
             invincibility = self.pause_menu.cheats[INVINCIBILITY]
             for ghost in self.ghosts:
-                if not invincibility \
-                        and ghost.hitbox.collides_with(self.player.hitbox):
-                    self.death_event()
+                if ghost.hitbox.collides_with(self.player.hitbox):
+                    if self.super_pacgum_state:
+                        ghost.set_destination(ghost.initial_x,
+                                              ghost.initial_y,
+                                              self.get_game_time())
+                    elif not invincibility:
+                        self.death_event()
                     break
 
     def update_radius(self) -> float:
+        """update the radius of an entity so it is not too big"""
         return min(self.scale_x, self.scale_y) // 2.5
 
     def update_entity(self, entity: Player,
                       scale_ratio_x: float,
                       scale_ratio_y: float):
+        """update the position and radius of an entity"""
         entity.x *= scale_ratio_x
         entity.y *= scale_ratio_y
         entity.radius = self.update_radius()
@@ -1236,7 +1259,7 @@ class GameLogic(Interface):
 
         self.draw_ghosts()
 
-        bullet_color = pr.Color(195, 140, 65, 255)
+        bullet_color = pr.Color(225, 210, 180, 255)
         for bullet in self.bullets:
             pr.draw_circle(int(bullet.center_x + CENTER_X),
                            int(bullet.center_y + CENTER_Y),
