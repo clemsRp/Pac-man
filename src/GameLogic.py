@@ -1039,7 +1039,7 @@ class GameLogic(Interface):
                             ghost.y = ghost.initial_y
                             ghost.destination = None
                             ghost.update_collision_box()
-                        else:
+                        elif ghost.destination is None:
                             ghost.set_destination(ghost.initial_x,
                                                   ghost.initial_y,
                                                   self.get_game_time())
