@@ -284,10 +284,10 @@ class MainMenu(Interface):
 
         for i, player in enumerate(
             sorted(
-                self.scores[:MAX_SCORES_SHOWN],
+                self.scores,
                 key=lambda dico: dico["score"],
                 reverse=True
-            )
+            )[:MAX_SCORES_SHOWN]
         ):
             pseudo = player["pseudo"]
             score = player["score"]

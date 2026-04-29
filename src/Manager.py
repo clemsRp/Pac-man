@@ -85,10 +85,14 @@ class GameManager:
                 self.interfaces[interface_result].level_start = 0.0
 
             if self.state != GAME_OVER and interface_result == GAME_OVER:
+                self.parser.parse_config(self.config_file)
                 self.interfaces[interface_result].score = (
-                    self.interfaces["gamelogic"].score
+                    self.interfaces[self.state].score
                 )
-                self.interfaces[interface_result].state = GAME_OVER
+                self.interfaces[interface_result].reset(
+                    self.parser.get_config(),
+                    self.parser.get_scores()
+                )
 
             if self.state != MAIN_MENU and interface_result == MAIN_MENU:
                 self.interfaces[interface_result].next_state = MAIN_MENU

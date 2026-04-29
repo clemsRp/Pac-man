@@ -1,5 +1,6 @@
 from src.Manager import GameManager
 
+import sys
 from src.parser import Parser
 from mazegenerator.mazegenerator import MazeGenerator
 from src.GameLogic import GameLogic
@@ -7,55 +8,49 @@ from src.GameOver import GameOver
 from src.MainMenu import MainMenu
 from src.LevelSelectionMenu import LevelSelectionMenu
 import pyray as pr
+
+
 if __name__ == "__main__":
 
     try:
+        if len(sys.argv) != 2:
+            raise Exception("Invalid number of parameters")
+        CONFIG_FILE: str = sys.argv[1]
         parser = Parser()
-        parser.parse_config("config.json")
-
+        parser.parse_config(CONFIG_FILE)
         maze_gen = MazeGenerator((16, 16))
-
         window_width = 1000
         window_height = 800
-
         game_manager = GameManager(
             maze_gen,
             parser,
             parser.get_config(),
-            "config.json"
+            CONFIG_FILE
         )
-
         # get the maximum window size
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
-
         window_width = 1920
         window_height = 1080 - 55
-
         game_manager.set_window_size(window_width,
                                      window_height)
         pr.set_window_position(0, 0)
-
         main_menu = MainMenu(window_width,
                              window_height,
                              parser)
         main_menu.set_assets(game_manager.assets)
-
         level_selection = LevelSelectionMenu(window_width,
                                              window_height,
                                              parser)
         level_selection.set_assets(game_manager.assets)
-
         game_logic = GameLogic(
             maze_gen, parser.get_config(),
             window_width, window_height
         )
-
         game_over = GameOver(
             window_width, window_height,
             parser.get_config(), parser.get_scores()
         )
-
         game_manager.add_interface("gamelogic",
                                    game_logic)
         game_manager.add_interface("mainmenu",
@@ -64,12 +59,9 @@ if __name__ == "__main__":
                                    level_selection)
         game_manager.add_interface("gameover",
                                    game_over)
-
         game_manager.set_state("mainmenu")
-
         game_logic.set_assets(game_manager.assets)
         game_over.set_assets(game_manager.assets)
-
         game_manager.start_game()
         game_manager.free_assets()
         game_manager.close_window()

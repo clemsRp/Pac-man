@@ -25,13 +25,17 @@ class GameOver(Interface):
             screen_height
         ]))
 
-        self.state = GAME_OVER
-
-        self.score = 0
-        self.pseudo = ""
+        self.score: int = 0
 
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+        self.reset(config, scores)
+
+    def reset(self, config, scores) -> None:
+        self.state = GAME_OVER
+
+        self.pseudo = ""
 
         self.config: dict = config
         self.scores: dict = scores
