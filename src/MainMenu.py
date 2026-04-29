@@ -36,12 +36,12 @@ class MainMenu(Interface):
                               self.start_game)
 
         exit_button = Button(center_x,
-                             int(center_y + button_height / 2 + 10),
+                             int(center_y + button_height / 2 + self.window_height * 0.02),
                              button_width, button_height,
                              "Exit",
                              pr.RED,
                              self.exit_game)
-        pac_size = 200
+        pac_size = int(self.window_height * 0.12)
         self.background_pacman = Player(30, 30, pac_size)
 
         self.background_points: list[CollisionBox] = []
@@ -175,10 +175,11 @@ class MainMenu(Interface):
                                 self.time_between_points_creation)
         nb_points_to_show = min(nb_points_to_show, len(self.background_points))
         points = self.get_n_first_points(nb_points_to_show, self.direction)
+        radius = int(self.background_pacman.radius * 0.15)
         for point in points:
             cx = point.center_x
             cy = point.center_y
-            pr.draw_circle(int(cx), int(cy), 23, pr.WHITE)
+            pr.draw_circle(int(cx), int(cy), radius, pr.WHITE)
 
     def draw_background_pacman(self):
         """draws the animated pacman in the background of the main menu"""
@@ -244,8 +245,8 @@ class MainMenu(Interface):
             )
         ])
         scores_menu_height = int(
-            0.12 * self.window_height + 100 +
-            47 * len(self.scores[:MAX_SCORES_SHOWN])
+            0.12 * self.window_height + 2 * font_size +
+            (font_size + 15) * len(self.scores[:MAX_SCORES_SHOWN])
         )
         menu_x = (self.window_width * 2 // 3)
         menu_y = int(
@@ -280,7 +281,7 @@ class MainMenu(Interface):
             font_size + 20, pr.GOLD
         )
 
-        y_offset = menu_y + 80
+        y_offset = menu_y + int(2.5 * font_size)
 
         for i, player in enumerate(
             sorted(
@@ -301,12 +302,12 @@ class MainMenu(Interface):
             pr.draw_text(f"{score}", menu_x + del_x, y_offset,
                          font_size + 10, pr.YELLOW)
 
-            y_offset += 45
+            y_offset += font_size + 15
 
         #  best player section
 
         separator_y = int(
-            menu_y + scores_menu_height - 100
+            menu_y + scores_menu_height - 3 * font_size
         )
         pr.draw_line(
             menu_x -

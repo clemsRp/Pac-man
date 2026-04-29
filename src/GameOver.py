@@ -154,7 +154,7 @@ class GameOver(Interface):
             pr.Rectangle(
                 int(
                     self.screen_width / 2 -
-                    center_title / 2 + 20 +
+                    center_title / 2 + int(0.1 * font_size) +
                     pr.measure_text(
                         "GAME ", int(font_size * 0.92)
                     )
@@ -206,7 +206,7 @@ class GameOver(Interface):
     def draw_pseudo(self) -> None:
         # draw box
 
-        border: int = 7
+        border: int = max(1, int(FONT_SIZE * 0.1))
 
         input_width: int = max([
             int(0.1 * self.screen_width),
@@ -256,9 +256,9 @@ class GameOver(Interface):
 
         if pr.get_time() % 2 <= 1 or self.cursor:
             pr.draw_rectangle(
-                start_pseudo_x + center_pseudo + 5,
+                start_pseudo_x + center_pseudo + max(1, int(FONT_SIZE * 0.1)),
                 start_pseudo_y,
-                5, FONT_SIZE, pr.BLACK
+                max(1, int(FONT_SIZE * 0.1)), FONT_SIZE, pr.BLACK
             )
 
     def update(self):

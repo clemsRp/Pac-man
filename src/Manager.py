@@ -131,8 +131,8 @@ class GameManager:
 
         self.window_width = pr.get_monitor_width(monitor)
         self.window_height = pr.get_monitor_height(monitor) - 100
-        self.scale_x = self.window_width / self.maze_width
-        self.scale_y = self.window_height / self.maze_height
+        self.scale_x = int(self.window_width / self.maze_width)
+        self.scale_y = int(self.window_height / self.maze_height)
         self.scale_x = min([self.scale_x, self.scale_y])
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x

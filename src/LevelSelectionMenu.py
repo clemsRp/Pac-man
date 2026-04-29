@@ -19,7 +19,7 @@ class LevelSelectionMenu(Interface):
 
         self.button_width = int(0.18 * self.window_width)
         self.button_height = int(0.05 * self.window_height)
-        self.margin = 20
+        self.margin = int(0.02 * self.window_height)
         self.buttons_per_col = 5
 
         self.setup_buttons()
@@ -41,10 +41,10 @@ class LevelSelectionMenu(Interface):
         start_y = (self.window_height - grid_height) // 2
 
         self.panel_rect = pr.Rectangle(
-            start_x - 40,
-            start_y - 80,
-            grid_width + 80,
-            grid_height + 200)
+            start_x - 2 * self.margin,
+            start_y - 4 * self.margin,
+            grid_width + 4 * self.margin,
+            grid_height + 10 * self.margin)
 
         for i, level in enumerate(levels):
             col = i // self.buttons_per_col
@@ -63,7 +63,7 @@ class LevelSelectionMenu(Interface):
         # Back button at the bottom of the panel
         back_btn = Button((self.window_width - self.button_width) // 2,
                           int(self.panel_rect.y + self.panel_rect.height -
-                              self.button_height - 30),
+                              self.button_height - int(self.margin * 1.5)),
                           self.button_width, self.button_height,
                           "BACK", pr.GRAY, self.go_back)
         self.add_button(back_btn)
@@ -83,11 +83,11 @@ class LevelSelectionMenu(Interface):
         pr.draw_rectangle_lines_ex(self.panel_rect, 3, pr.GOLD)
 
         title = "SELECT YOUR LEVEL"
-        font_size = 40
+        font_size = int(0.05 * self.window_height)
         title_x = (self.window_width - pr.measure_text(title, font_size)) // 2
         pr.draw_text(
             title, title_x, int(
-                self.panel_rect.y + 20), font_size, pr.GOLD)
+                self.panel_rect.y + self.margin), font_size, pr.GOLD)
 
         super().update()
         state_to_return = self.next_state

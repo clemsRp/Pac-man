@@ -1205,7 +1205,7 @@ class GameLogic(Interface):
                 texture = ghost.ghost
 
             # même logique que pacman
-            scale = self.player.radius / (GHOST_SPRITE_QUALITY / 2)
+            scale = (self.player.radius / (GHOST_SPRITE_QUALITY / 2)) * 0.5
 
             pr.draw_texture_pro(
                 texture,
@@ -1364,10 +1364,10 @@ class GameLogic(Interface):
                 texture,
                 pr.Rectangle(0, 0, texture.width, texture.height),
                 pr.Rectangle(
-                    (k + 0.5) * (texture.width * 1.2) * scale,
-                    25,
-                    texture.width * scale,
-                    texture.height * scale
+                    (k + 1) * (texture.width * 1.2) * scale * 0.5,
+                    15 + (texture.height * scale) / 2,
+                    texture.width * scale * 0.5,
+                    texture.height * scale * 0.5
                 ),
                 pr.Vector2(
                     (texture.width * scale) / 2.0,

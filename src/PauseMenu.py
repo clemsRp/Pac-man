@@ -31,7 +31,7 @@ class PauseMenu(Interface):
 
         buttons_width = self.menu_width // 5
         buttons_height = self.menu_height // 15
-        padding_bottom = 30
+        padding_bottom = int(self.menu_height * 0.05)
 
         resume_button_x = int(self.menu_x + (self.menu_width -
                                              buttons_width) / 2)
@@ -71,12 +71,12 @@ class PauseMenu(Interface):
             (NB_BOUNCES, 1, 99999, 3)
         ]
 
-        checkbox_size = 50
-        start_y = int(self.menu_y + 100)
-        box_x = int(self.menu_x + self.menu_width - 100)
+        checkbox_size = int(self.menu_height * 0.05)
+        start_y = int(self.menu_y + self.menu_height * 0.15)
+        box_x = int(self.menu_x + self.menu_width - self.menu_width * 0.1)
 
         for text in checkbox_texts:
-            checkbox_sep_size = checkbox_size + 30
+            checkbox_sep_size = checkbox_size + int(self.menu_height * 0.02)
             cb = Checkbox(box_x,
                           start_y,
                           checkbox_size,
@@ -85,11 +85,11 @@ class PauseMenu(Interface):
             self.add_checkbox(cb, text)
             start_y += checkbox_sep_size
 
-        spinner_width = 130
-        spinner_height = 50
-        box_x = int(self.menu_x + self.menu_width - spinner_width - 50)
+        spinner_width = int(self.menu_width * 0.07)
+        spinner_height = int(self.menu_height * 0.05)
+        box_x = int(self.menu_x + self.menu_width - spinner_width - self.menu_width * 0.05)
         for text, min_val, max_val, default in spinner_texts:
-            spinner_sep_size = spinner_height + 30
+            spinner_sep_size = spinner_height + int(self.menu_height * 0.02)
 
             sp = Spinner(box_x,
                          start_y,
@@ -109,17 +109,17 @@ class PauseMenu(Interface):
         max_sp_width = max(pr.measure_text(t[0], spinner_height) for t
                            in spinner_texts)
 
-        cb_left = int(self.menu_x + self.menu_width - 100) - max_cb_width - 10
+        cb_left = int(self.menu_x + self.menu_width - self.menu_width * 0.1) - max_cb_width - int(self.menu_width * 0.01)
         sp_left = (
-            int(self.menu_x + self.menu_width - spinner_width - 50)
-            - max_sp_width - 10
+            int(self.menu_x + self.menu_width - spinner_width - self.menu_width * 0.05)
+            - max_sp_width - int(self.menu_width * 0.01)
         )
 
-        left_edge = min(cb_left, sp_left) - 30
-        right_edge = int(self.menu_x + self.menu_width - 20)
+        left_edge = min(cb_left, sp_left) - int(self.menu_width * 0.03)
+        right_edge = int(self.menu_x + self.menu_width - self.menu_width * 0.02)
 
         frame_x = left_edge
-        frame_y = int(self.menu_y + 70)
+        frame_y = int(self.menu_y + self.menu_height * 0.1)
         frame_width = right_edge - left_edge
         frame_height = start_y - frame_y
 
@@ -127,8 +127,9 @@ class PauseMenu(Interface):
                                               frame_y,
                                               frame_width,
                                               frame_height)
-        self.cheats_text_x = frame_x + 20
-        self.cheats_text_y = frame_y - 45
+        self.cheats_text_x = frame_x + int(self.menu_width * 0.02)
+        self.cheats_text_y = frame_y - int(self.menu_height * 0.04)
+        self.cheats_font_size = int(self.menu_height * 0.04)
 
     def add_checkbox(self, checkbox: Checkbox,
                      checkbox_name: str = "") -> None:
@@ -171,7 +172,7 @@ class PauseMenu(Interface):
         pr.draw_text("Cheats",
                      int(self.cheats_text_x),
                      int(self.cheats_text_y),
-                     40,
+                     self.cheats_font_size,
                      pr.RAYWHITE)
 
     def update_cheats(self):

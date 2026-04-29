@@ -37,7 +37,7 @@ class Checkbox:
         font_size = int(self.rect.height)
         text_width = pr.measure_text(self.text, font_size)
 
-        text_x = int(self.rect.x) - text_width - 10
+        text_x = int(self.rect.x) - text_width - int(font_size * 0.2)
         text_y = int(self.rect.y)
         pr.draw_text(self.text, text_x, text_y, font_size, self.text_color)
 
@@ -103,7 +103,7 @@ class Spinner:
         font_size = int(self.rect.height)
         text_width = pr.measure_text(self.text, font_size)
 
-        text_x = int(self.rect.x) - text_width - 10
+        text_x = int(self.rect.x) - text_width - int(font_size * 0.2)
         text_y = int(self.rect.y)
 
         if self.text != "":
