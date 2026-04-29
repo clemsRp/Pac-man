@@ -162,6 +162,10 @@ class GameLogic(Interface):
         self.scale_x -= self.scale_x % 2
         self.scale_y = self.scale_x
 
+        self.game_duration = 0.0
+        self.level_start = 0.0
+        self.super_pacgum_state = False
+
         self.buttons = []
         buttons_width = 300
         buttons_height = 50
@@ -180,9 +184,6 @@ class GameLogic(Interface):
         self.paused = False
         self.total_paused_time = 0.0
         self.pause_started_at: float | None = None
-
-        self.score = 0
-        self.life = 3
 
         self.t_start = 0.0
         CENTER_X = int(
@@ -686,7 +687,19 @@ class GameLogic(Interface):
         ghost: Ghost | None = None,
         ignore_collisions: bool = False
     ):
+        hit = self.player.hitbox
+        cond1: bool = new_x + hit.radius < \
+            self.scale_x * self.maze_width
+        cond2: bool = new_x - hit.radius > 0
+        cond3: bool = new_y + hit.radius < \
+            self.scale_y * self.maze_height
+        cond4: bool = new_y - hit.radius > 0
+
+        inside_maze: bool = cond1 and cond2 and cond3 and cond4
+
         if ghost is None:
+            if not inside_maze:
+                return
             ghost = self.player
 
         base_y = ghost.y
@@ -1076,7 +1089,7 @@ class GameLogic(Interface):
             pr.draw_circle(
                 point.center_x + CENTER_X,
                 point.center_y + CENTER_Y,
-                point.radius, pr.YELLOW
+                int(self.scale_x * 0.4), pr.YELLOW
             )
 
     def draw_player(self):
@@ -1334,26 +1347,29 @@ class GameLogic(Interface):
         texture = self.assets["pacman"][1]
         scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
 
-        pr.draw_text(
-            "Score: " + str(self.score),
-            15,
-            15 + int(texture.height * scale),
-            20, pr.WHITE
+        size: tuple[int, int] = (
+            self.config["levels"][self.current_level]["width"],
+            self.config["levels"][self.current_level]["height"]
         )
 
-        pr.draw_text(
-            f"Time: {abs(self.game_duration):.1f}",
-            15,
-            35 + int(texture.height * scale),
-            20, pr.WHITE
-        )
+        datas: dict[str, str] = {
+            "Level": self.config["levels"][self.current_level]["name"],
+            "Size": str(size),
+            "Score": str(self.score),
+            "Time": f"{abs(self.game_duration):.1f}",
+            "Max level time": str(self.config["level_max_time"])
+        }
 
-        pr.draw_text(
-            "Max level time: " + str(self.config["level_max_time"]),
-            15,
-            55 + int(texture.height * scale),
-            20, pr.WHITE
-        )
+        index: int = 0
+        offset: int = 20
+        for (key, val) in datas.items():
+            pr.draw_text(
+                f"{key}: {val}",
+                15,
+                15 + index * offset + int(texture.height * scale),
+                20, pr.WHITE
+            )
+            index += 1
 
         bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
 
@@ -1386,7 +1402,7 @@ class GameLogic(Interface):
                 self.config["levels"][self.current_level]["width"],
                 self.config["levels"][self.current_level]["height"]
             )
-            self.change_level(MazeGenerator(size))
+            self.reset(MazeGenerator(size))
 
         if self.life + bonus_lives < 0:
             if not self.paused:
