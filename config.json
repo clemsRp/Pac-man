@@ -1,56 +1,56 @@
 [
 	{
 		"highscore_filename": "scores.json",
-		"levels": [
+				"levels": [
     	    {
     	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "width": 15,
+    	        "height": 15
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level2",
+    	        "width": 16,
+    	        "height": 15
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level3",
+    	        "width": 16,
+    	        "height": 16
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level4",
+    	        "width": 17,
+    	        "height": 16
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level5",
+    	        "width": 17,
+    	        "height": 17
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level6",
+    	        "width": 18,
+    	        "height": 17
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level7",
+    	        "width": 18,
+    	        "height": 18
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level8",
+    	        "width": 19,
+    	        "height": 18
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level9",
+    	        "width": 19,
+    	        "height": 19
     	    },
     	    {
-    	        "name": "level1",
-    	        "width": 5,
-    	        "height": 5
+    	        "name": "level10",
+    	        "width": 20,
+    	        "height": 20
     	    }
     	],
 		"lives": 3,
@@ -58,6 +58,6 @@
 		"points_per_super_pacgum": 50,
 		"points_per_ghost": 200,
 		"seed": 42,
-		"level_max_time": 90
+		"level_max_time": 130
 	}
 ]

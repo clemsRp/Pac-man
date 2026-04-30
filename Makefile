@@ -1,10 +1,10 @@
-ARGS ?= 
+ARGS ?= config.json
 
 install:
 	uv sync
 
 run:
-	uv run python3 pacman.py
+	uv run python3 pacman.py $(ARGS)
 
 debug:
 	@echo "   Starting debugger..."
@@ -29,4 +29,4 @@ clean:
 	rm -rf __pycache__
 	rm -rf .vscode
 
-.PHONY: install run debug lint clean fclean
+.PHONY: install run debug lint clean fclean                                        

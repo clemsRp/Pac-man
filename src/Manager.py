@@ -8,7 +8,7 @@ from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import (
     EXIT, GAME_LOGIC, MAIN_MENU,
-    GAME_OVER, LEVEL_SELECTION
+    GAME_FINISH, LEVEL_SELECTION
 )
 
 
@@ -16,11 +16,11 @@ class GameManager:
     """class that manages the game"""
 
     def __init__(
-                self, maze: MazeGenerator,
-                parser: Parser,
-                config: dict[str, Any],
-                config_file: str
-            ) -> None:
+        self, maze: MazeGenerator,
+        parser: Parser,
+        config: dict[str, Any],
+        config_file: str
+    ) -> None:
 
         self.maze: MazeGenerator = maze
         self.parser: Parser = parser
@@ -64,13 +64,18 @@ class GameManager:
             if self.state == LEVEL_SELECTION and \
                     interface_result == GAME_LOGIC:
                 selected_level = self.interfaces[
-                                                LEVEL_SELECTION].selected_level
+                    LEVEL_SELECTION].selected_level
                 if selected_level:
+                    self.interfaces[GAME_LOGIC].current_level = self.config["levels"].index(
+                        selected_level)
+                    seed = self.config["seed"]
+
                     new_maze = MazeGenerator(
                         (
                             selected_level["width"],
                             selected_level["height"]
-                        )
+                        ),
+                        seed=seed
                     )
                     self.interfaces[GAME_LOGIC].reset(new_maze)
 
@@ -84,7 +89,7 @@ class GameManager:
                 self.interfaces[interface_result].game_duration = 0.0
                 self.interfaces[interface_result].level_start = 0.0
 
-            if self.state != GAME_OVER and interface_result == GAME_OVER:
+            if self.state != GAME_FINISH and interface_result == GAME_FINISH:
                 self.parser.parse_config(self.config_file)
                 self.interfaces[interface_result].score = (
                     self.interfaces[self.state].score
@@ -108,8 +113,8 @@ class GameManager:
                     self.parser.get_scores().get("players", [])
                 )
 
-            if self.state != GAME_OVER and interface_result == GAME_OVER:
-                self.interfaces["gameover"].state = GAME_OVER
+            if self.state != GAME_FINISH and interface_result == GAME_FINISH:
+                self.interfaces["GameFinish"].state = GAME_FINISH
             if interface_result != self.state:
                 self.set_state(interface_result)
 

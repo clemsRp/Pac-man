@@ -3,20 +3,20 @@ import time
 import json
 import pyray as pr
 from .Interfaces import Interface, Button
-from .Constants import GAME_OVER, MAIN_MENU
+from .Constants import GAME_FINISH, MAIN_MENU
 
 FONT_SIZE = 50
 
 
-class GameOver(Interface):
+class GameFinish(Interface):
 
     def __init__(
-                self,
-                screen_width: int,
-                screen_height: int,
-                config: dict,
-                scores: dict
-            ):
+        self,
+        screen_width: int,
+        screen_height: int,
+        config: dict,
+        scores: dict
+    ):
         super().__init__()
 
         global FONT_SIZE
@@ -33,7 +33,7 @@ class GameOver(Interface):
         self.reset(config, scores)
 
     def reset(self, config, scores) -> None:
-        self.state = GAME_OVER
+        self.state = GAME_FINISH
 
         self.pseudo = ""
 
@@ -245,9 +245,9 @@ class GameOver(Interface):
             center_pseudo / 2
         )
         start_pseudo_y: int = int(
-                2 / 3 * self.screen_height +
-                FONT_SIZE / 2
-            )
+            2 / 3 * self.screen_height +
+            FONT_SIZE / 2
+        )
 
         # draw pseudo
         pr.draw_text(

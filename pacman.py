@@ -4,7 +4,7 @@ import sys
 from src.parser import Parser
 from mazegenerator.mazegenerator import MazeGenerator
 from src.GameLogic import GameLogic
-from src.GameOver import GameOver
+from src.GameFinish import GameFinish
 from src.MainMenu import MainMenu
 from src.LevelSelectionMenu import LevelSelectionMenu
 import pyray as pr
@@ -18,7 +18,8 @@ if __name__ == "__main__":
         CONFIG_FILE: str = sys.argv[1]
         parser = Parser()
         parser.parse_config(CONFIG_FILE)
-        maze_gen = MazeGenerator((16, 16))
+        seed = parser.get_config()["seed"]
+        maze_gen = MazeGenerator((16, 16), seed=seed)
         window_width = 1000
         window_height = 800
         game_manager = GameManager(
@@ -30,8 +31,8 @@ if __name__ == "__main__":
         # get the maximum window size
         window_width, window_height = game_manager.create_window(
             window_width, window_height)
-        window_width = 1920
-        window_height = 1080 - 55
+        # window_width = 1920
+        # window_height = 1080 - 55
         game_manager.set_window_size(window_width,
                                      window_height)
         pr.set_window_position(0, 0)
@@ -47,7 +48,7 @@ if __name__ == "__main__":
             maze_gen, parser.get_config(),
             window_width, window_height
         )
-        game_over = GameOver(
+        game_finish = GameFinish(
             window_width, window_height,
             parser.get_config(), parser.get_scores()
         )
@@ -57,11 +58,11 @@ if __name__ == "__main__":
                                    main_menu)
         game_manager.add_interface("levelselection",
                                    level_selection)
-        game_manager.add_interface("gameover",
-                                   game_over)
+        game_manager.add_interface("GameFinish",
+                                   game_finish)
         game_manager.set_state("mainmenu")
         game_logic.set_assets(game_manager.assets)
-        game_over.set_assets(game_manager.assets)
+        game_finish.set_assets(game_manager.assets)
         game_manager.start_game()
         game_manager.free_assets()
         game_manager.close_window()

@@ -20,7 +20,7 @@ from .Constants import (
     BULLET_SPEED,
     BULLET_RADIUS,
     BULLET_FIRE_RATE,
-    GAME_OVER,
+    GAME_FINISH,
     AK47_ALWAYS_ACTIVE,
     INVINCIBILITY,
     NB_BOUNCES,
@@ -185,7 +185,7 @@ class GameLogic(Interface):
         self.total_paused_time = 0.0
         self.pause_started_at: float | None = None
 
-        self.t_start = 0.0
+        self.t_start = self.get_game_time()
         CENTER_X = int(
             (
                 self.screen_width - self.scale_x * self.maze_width
@@ -511,6 +511,7 @@ class GameLogic(Interface):
                     )
                     if pos_x != self.player.x or \
                             pos_y != self.player.y:
+
                         points.append(
                             CircleBox(
                                 pos_x,
@@ -828,6 +829,9 @@ class GameLogic(Interface):
         # Ghosts
         if self.get_game_time() - self.t_start < 3:
             self.update_game_duration = False
+            if self.level_start != 0.0:
+                # to avoid incrementing the time when we die
+                self.level_start += pr.get_frame_time()
             return
         elif self.level_start == 0.0:
             self.level_start = self.get_game_time()
@@ -1048,11 +1052,13 @@ class GameLogic(Interface):
                 if ghost.hitbox.collides_with(self.player.hitbox):
                     if self.super_pacgum_state:
                         if freeze_ghosts:
+                            self.score += self.config["points_per_ghost"]
                             ghost.x = ghost.initial_x
                             ghost.y = ghost.initial_y
                             ghost.destination = None
                             ghost.update_collision_box()
                         elif ghost.destination is None:
+                            self.score += self.config["points_per_ghost"]
                             ghost.set_destination(ghost.initial_x,
                                                   ghost.initial_y,
                                                   self.get_game_time())
@@ -1275,6 +1281,7 @@ class GameLogic(Interface):
         return angle_deg
 
     def draw_ak47(self, angle_deg: float) -> None:
+        """draw the ak47 sprite at the pacman position"""
         scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
         source_height = AK47_SPRITE_QUALITY
         if 90 < angle_deg < 270:
@@ -1300,14 +1307,13 @@ class GameLogic(Interface):
         return int(self.scale_x), int(self.scale_y)
 
     def update(self) -> str:
+        """update the game logic, this is called every frame"""
         super().update()
 
         if self.update_game_duration:
             self.game_duration = self.get_game_time() - self.level_start
             if self.level_start == 0.0:
                 self.game_duration = 0.0
-            if self.get_game_time() - self.t_start < 3:
-                self.game_duration -= pr.get_frame_time()
 
         mouse_angle = self.get_angle_deg()
         if not self.paused:
@@ -1396,19 +1402,21 @@ class GameLogic(Interface):
         if len(self.points) + len(self.super_pacgums) == 0:
             self.current_level += 1
             if self.current_level >= 10:
-                return GAME_OVER
+                return GAME_FINISH
 
             size: tuple[int, int] = (
                 self.config["levels"][self.current_level]["width"],
                 self.config["levels"][self.current_level]["height"]
             )
-            self.reset(MazeGenerator(size))
+
+            seed = self.config["seed"]
+            self.reset(MazeGenerator(size, seed=seed))
 
         if self.life + bonus_lives < 0:
             if not self.paused:
-                return GAME_OVER
+                return GAME_FINISH
 
         if self.game_duration > float(self.config["level_max_time"]):
-            return GAME_OVER
+            return GAME_FINISH
 
         return GAME_LOGIC
