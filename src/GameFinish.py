@@ -35,6 +35,8 @@ class GameFinish(Interface):
     def reset(self, config, scores) -> None:
         self.state = GAME_FINISH
 
+        self.buttons: list[Button] = []
+
         self.pseudo = ""
 
         self.config: dict = config
@@ -112,8 +114,8 @@ class GameFinish(Interface):
         while key > 0:
             if 32 <= key <= 125:
                 lettre = chr(key)
-                if (lettre.isalpha() or lettre.isspace()) and \
-                        len(self.pseudo) < 10:
+                if (lettre.isalnum() or lettre.isspace()) \
+                        and len(self.pseudo) < 10:
                     self.pseudo += lettre
                     self.last_key_time = time.time()
 

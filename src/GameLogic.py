@@ -27,6 +27,7 @@ from .Constants import (
     REMOVE_COLLISIONS,
     FREEZE_GHOSTS,
     BONUS_LIVES,
+    LEVEL_SKIP,
     PACMAN_LIGHT_COLOR_R,
     PACMAN_LIGHT_COLOR_G,
     PACMAN_LIGHT_COLOR_B,
@@ -1049,19 +1050,27 @@ class GameLogic(Interface):
         if not remove_collisions:
             invincibility = self.pause_menu.cheats[INVINCIBILITY]
             for ghost in self.ghosts:
+                # if the ghost is coming back home, dont check anything with it
+                if ghost.destination is not None:
+                    continue
+
+                # if the ghost is not dead we can check for collisions with the player
                 if ghost.hitbox.collides_with(self.player.hitbox):
                     if self.super_pacgum_state:
-                        if freeze_ghosts:
+                        if freeze_ghosts:  # teleport the ghost home since it is frozen
                             self.score += self.config["points_per_ghost"]
                             ghost.x = ghost.initial_x
                             ghost.y = ghost.initial_y
-                            ghost.destination = None
                             ghost.update_collision_box()
-                        elif ghost.destination is None:
+
+                        else:  # ghost.destination is None
                             self.score += self.config["points_per_ghost"]
-                            ghost.set_destination(ghost.initial_x,
-                                                  ghost.initial_y,
-                                                  self.get_game_time())
+                            ghost.set_destination(
+                                ghost.initial_x,
+                                ghost.initial_y,
+                                self.get_game_time()
+                            )
+
                     elif not invincibility:
                         self.death_event()
                     break
@@ -1399,18 +1408,19 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
-        if len(self.points) + len(self.super_pacgums) == 0:
+        skip_level: bool = self.pause_menu.cheats[LEVEL_SKIP] and not self.paused
+
+        if len(self.points) + len(self.super_pacgums) == 0 or skip_level:
             self.current_level += 1
             if self.current_level >= 10:
                 return GAME_FINISH
 
-            size: tuple[int, int] = (
+            size = (
                 self.config["levels"][self.current_level]["width"],
                 self.config["levels"][self.current_level]["height"]
             )
 
-            seed = self.config["seed"]
-            self.reset(MazeGenerator(size, seed=seed))
+            self.reset(MazeGenerator(size, seed=int(time.time())))
 
         if self.life + bonus_lives < 0:
             if not self.paused:

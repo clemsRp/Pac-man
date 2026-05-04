@@ -24,7 +24,7 @@ void main()
     vec2 stepSize = dir / max(1.0, dist);
     float shadow = 1.0;
     
-    for(int i = 2; i < int(dist); i++) {
+    for(int i = 5; i < int(dist); i++) {
         vec2 samplePos = posInMaze + stepSize * float(i);
         vec2 sampleTexCoord = samplePos / mazeSize;
         

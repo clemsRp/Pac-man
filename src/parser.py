@@ -79,9 +79,9 @@ class Parser:
         return self._scores
 
     def _is_valid_config(
-                self,
-                config: dict, filename: str
-            ) -> dict:
+        self,
+        config: dict, filename: str
+    ) -> dict:
         '''
         Check if the config is valid or not
 
@@ -196,9 +196,9 @@ Too many keys"
         }
 
     def _are_valid_scores(
-                self,
-                scores: dict, filename: str
-            ) -> dict:
+        self,
+        scores: dict, filename: str
+    ) -> dict:
         '''
         Check if the scores is valid or not
 
@@ -251,7 +251,7 @@ Too many keys"
                 errors.append(
                     "player pseudo must be a str"
                 )
-            elif not player["pseudo"].replace(" ", "").isalpha() or \
+            elif not player["pseudo"].replace(" ", "").isalnum() or \
                     len(player["pseudo"]) > 10:
                 errors.append(
                     f"Invalid pseudo '{player['pseudo']}'"

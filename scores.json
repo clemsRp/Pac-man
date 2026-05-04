@@ -84,6 +84,30 @@
 	        {
 	            "pseudo": "popitt",
 	            "score": 2290
+	        },
+	        {
+	            "pseudo": "test",
+	            "score": 2420
+	        },
+	        {
+	            "pseudo": "test",
+	            "score": 2420
+	        },
+	        {
+	            "pseudo": "test",
+	            "score": 4880
+	        },
+	        {
+	            "pseudo": "hello 42",
+	            "score": 50
+	        },
+	        {
+	            "pseudo": "hello 42",
+	            "score": 1940
+	        },
+	        {
+	            "pseudo": "opernodjs1",
+	            "score": 100
 	        }
 	    ]
 	}
