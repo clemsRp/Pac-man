@@ -20,7 +20,8 @@ from .Constants import (
     BULLET_SPEED,
     BULLET_RADIUS,
     BULLET_FIRE_RATE,
-    GAME_FINISH,
+    GAME_OVER,
+    GAME_WON,
     AK47_ALWAYS_ACTIVE,
     INVINCIBILITY,
     NB_BOUNCES,
@@ -1412,8 +1413,8 @@ class GameLogic(Interface):
 
         if len(self.points) + len(self.super_pacgums) == 0 or skip_level:
             self.current_level += 1
-            if self.current_level >= 10:
-                return GAME_FINISH
+            if self.current_level >= len(self.config["levels"]):
+                return GAME_WON
 
             size = (
                 self.config["levels"][self.current_level]["width"],
@@ -1424,9 +1425,9 @@ class GameLogic(Interface):
 
         if self.life + bonus_lives < 0:
             if not self.paused:
-                return GAME_FINISH
+                return GAME_OVER
 
         if self.game_duration > float(self.config["level_max_time"]):
-            return GAME_FINISH
+            return GAME_OVER
 
         return GAME_LOGIC

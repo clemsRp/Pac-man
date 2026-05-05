@@ -3,7 +3,7 @@ import time
 import json
 import pyray as pr
 from .Interfaces import Interface, Button
-from .Constants import GAME_FINISH, MAIN_MENU
+from .Constants import GAME_OVER, GAME_WON, MAIN_MENU
 
 FONT_SIZE = 50
 
@@ -30,10 +30,11 @@ class GameFinish(Interface):
         self.screen_width = screen_width
         self.screen_height = screen_height
 
+        self.won = False
         self.reset(config, scores)
 
     def reset(self, config, scores) -> None:
-        self.state = GAME_FINISH
+        self.state = GAME_WON if self.won else GAME_OVER
 
         self.buttons: list[Button] = []
 
@@ -79,7 +80,7 @@ class GameFinish(Interface):
         self.add_button(save_button)
         self.add_button(skip_button)
 
-    def save_data(self):
+    def save_data(self) -> None:
         if self.pseudo == "":
             return
         self.scores["players"].append({
@@ -102,13 +103,13 @@ class GameFinish(Interface):
 
         self.state = MAIN_MENU
 
-    def skip(self):
+    def skip(self) -> None:
         self.state = MAIN_MENU
 
-    def set_assets(self, assets: dict):
+    def set_assets(self, assets: dict) -> None:
         super().set_assets(assets)
 
-    def update_pseudo(self):
+    def update_pseudo(self) -> None:
         key = pr.get_char_pressed()
 
         while key > 0:
@@ -129,8 +130,25 @@ class GameFinish(Interface):
         if pr.is_key_pressed(pr.KEY_ENTER):
             self.save_data()
 
-    def draw_game_over(self):
-        font_size = int(3.5 * FONT_SIZE)
+    def draw_game_win(self, font_size: int) -> None:
+        center_title = pr.measure_text(
+            "GAME WON", font_size
+        )
+        pr.draw_text(
+            "GAME WON",
+            int(
+                self.screen_width / 2 -
+                center_title / 2
+            ),
+            int(
+                self.screen_height / 3 -
+                font_size / 2
+            ),
+            font_size, pr.GREEN
+        )
+        return
+
+    def draw_game_over(self, font_size: int) -> None:
         center_title = pr.measure_text(
             "GAME   VER", font_size
         )
@@ -178,14 +196,14 @@ class GameFinish(Interface):
         )
 
     def draw_score_rank(self) -> None:
-        text1: str = f"Score: {self.score}, Rank: {self.rank}"
-        center_text1 = pr.measure_text(
-            text1, FONT_SIZE
+        scores_text: str = f"Score: {self.score}, Rank: {self.rank}"
+        center_scores_text = pr.measure_text(
+            scores_text, FONT_SIZE
         )
 
         pr.draw_text(
-            text1,
-            int(0.5 * self.screen_width - center_text1 / 2),
+            scores_text,
+            int(0.5 * self.screen_width - center_scores_text / 2),
             int(0.5 * self.screen_height - 0.7 * FONT_SIZE),
             FONT_SIZE,
             pr.WHITE
@@ -196,14 +214,14 @@ class GameFinish(Interface):
             1
         )
 
-        text2: str = f"Top {percent_rank}% best score"
-        center_text2 = pr.measure_text(
-            text2, FONT_SIZE
+        percent_best_text: str = f"Top {percent_rank}% best score"
+        center_percent_best_text = pr.measure_text(
+            percent_best_text, FONT_SIZE
         )
 
         pr.draw_text(
-            text2,
-            int(0.5 * self.screen_width - center_text2 / 2),
+            percent_best_text,
+            int(0.5 * self.screen_width - center_percent_best_text / 2),
             int(0.5 * self.screen_height + 0.7 * FONT_SIZE),
             FONT_SIZE,
             pr.WHITE
@@ -273,8 +291,12 @@ class GameFinish(Interface):
         else:
             self.cursor = False
 
+        font_size = int(3.5 * FONT_SIZE)
         self.update_pseudo()
-        self.draw_game_over()
+        if self.won:
+            self.draw_game_win(font_size)
+        else:
+            self.draw_game_over(font_size)
         self.draw_score_rank()
         self.draw_pseudo()
 

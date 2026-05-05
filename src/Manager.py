@@ -8,7 +8,7 @@ from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Constants import (
     EXIT, GAME_LOGIC, MAIN_MENU,
-    GAME_FINISH, LEVEL_SELECTION
+    GAME_OVER, GAME_WON, LEVEL_SELECTION
 )
 
 
@@ -49,7 +49,7 @@ class GameManager:
 
         self.state = state
 
-    def start_game(self):
+    def start_game(self) -> None:
         """function for the logic of this interface"""
 
         while not pr.window_should_close():
@@ -57,7 +57,6 @@ class GameManager:
             pr.clear_background(pr.BLACK)
             cur_interface = self.interfaces[self.state]
             interface_result = cur_interface.update()
-
             if interface_result == EXIT:
                 break
 
@@ -89,12 +88,14 @@ class GameManager:
                 self.interfaces[interface_result].game_duration = 0.0
                 self.interfaces[interface_result].level_start = 0.0
 
-            if self.state != GAME_FINISH and interface_result == GAME_FINISH:
+            if self.state == GAME_LOGIC and interface_result in [
+                    GAME_OVER, GAME_WON]:
                 self.parser.parse_config(self.config_file)
-                self.interfaces[interface_result].score = (
+                self.interfaces["GameFinish"].score = (
                     self.interfaces[self.state].score
                 )
-                self.interfaces[interface_result].reset(
+                self.interfaces["GameFinish"].won = interface_result == GAME_WON
+                self.interfaces["GameFinish"].reset(
                     self.parser.get_config(),
                     self.parser.get_scores()
                 )
@@ -113,15 +114,16 @@ class GameManager:
                     self.parser.get_scores().get("players", [])
                 )
 
-            if self.state != GAME_FINISH and interface_result == GAME_FINISH:
-                self.interfaces["GameFinish"].state = GAME_FINISH
             if interface_result != self.state:
-                self.set_state(interface_result)
+                # this state has 2 possible behaviours
+                if interface_result in [GAME_OVER, GAME_WON]:
+                    self.set_state("GameFinish")
+                else:
+                    self.set_state(interface_result)
 
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
-        # pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
         min_width: int = 1200
         min_height: int = 1000
 

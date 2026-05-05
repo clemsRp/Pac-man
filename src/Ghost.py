@@ -2,7 +2,7 @@
 from .Physics import CircleBox, RectangleBox, CollisionBox
 from mazegenerator.mazegenerator import MazeGenerator
 from .solve_maze import find_path
-from .Constants import SPEED, SOUTH, EAST
+from .Constants import SPEED, SOUTH, EAST, DELTA
 import pyray as pr
 import random
 
@@ -118,15 +118,33 @@ class Ghost:
             target = self.random_target
         else:
             if is_fleeing:
-                if self.random_target is None or (gy, gx) == self.random_target:
-                    valid_targets = [(y, x) for y in range(len(maze))
-                                     for x in range(len(maze[0]))
-                                     if maze[y][x] != 15]
-    
-                    if valid_targets:
-                        self.random_target = max(valid_targets, key=lambda t: (t[0]-py)**2 + (t[1]-px)**2)
-                    else:
-                        self.random_target = (gy, gx)
+                new_maze[py][px] = 0
+                if self.random_target is None or (
+                        gy, gx) == self.random_target:
+                    queue = [(gy, gx)]
+                    visited = {(gy, gx)}
+                    furthest_node = (gy, gx)
+                    max_dist = -1
+
+                    while queue:
+                        curr_y, curr_x = queue.pop(0)
+
+                        dist = (curr_y - py)**2 + (curr_x - px)**2
+                        if dist > max_dist:
+                            max_dist = dist
+                            furthest_node = (curr_y, curr_x)
+
+                        for i in range(4):
+                            mask = 1 << i
+                            if new_maze[curr_y][curr_x] & mask:
+                                delta = DELTA[mask]
+                                next_node = (
+                                    curr_y + delta[0], curr_x + delta[1])
+                                if next_node not in visited and 0 <= next_node[0] < len(
+                                        maze) and 0 <= next_node[1] < len(maze[0]):
+                                    visited.add(next_node)
+                                    queue.append(next_node)
+                    self.random_target = furthest_node
                 target = self.random_target
             else:
                 self.random_target = None
