@@ -13,14 +13,17 @@ import pyray as pr
 
 class PauseMenu(Interface):
     def __init__(self,
+                 scores: dict,
                  window_width: int,
                  window_height: int) -> None:
         super().__init__()
         self.next_state = PAUSE_MENU
         self.window_width = window_width
         self.window_height = window_height
+        self.scores = scores
         PAUSE_MENU_FADE = 0.8
 
+        self.current_score = 0
         self.menu_width = int(self.window_width // 1.5)
         self.menu_height = int(self.window_height // 1.5)
         self.menu_color = pr.fade(pr.BLACK, PAUSE_MENU_FADE)
@@ -87,7 +90,12 @@ class PauseMenu(Interface):
 
         spinner_width = int(self.menu_width * 0.07)
         spinner_height = int(self.menu_height * 0.05)
-        box_x = int(self.menu_x + self.menu_width - spinner_width - self.menu_width * 0.05)
+        box_x = int(
+            self.menu_x +
+            self.menu_width -
+            spinner_width -
+            self.menu_width *
+            0.05)
         for text, min_val, max_val, default in spinner_texts:
             spinner_sep_size = spinner_height + int(self.menu_height * 0.02)
 
@@ -109,14 +117,20 @@ class PauseMenu(Interface):
         max_sp_width = max(pr.measure_text(t[0], spinner_height) for t
                            in spinner_texts)
 
-        cb_left = int(self.menu_x + self.menu_width - self.menu_width * 0.1) - max_cb_width - int(self.menu_width * 0.01)
+        cb_left = int(self.menu_x + self.menu_width - self.menu_width *
+                      0.1) - max_cb_width - int(self.menu_width * 0.01)
         sp_left = (
-            int(self.menu_x + self.menu_width - spinner_width - self.menu_width * 0.05)
+            int(self.menu_x + self.menu_width -
+                spinner_width - self.menu_width * 0.05)
             - max_sp_width - int(self.menu_width * 0.01)
         )
 
         left_edge = min(cb_left, sp_left) - int(self.menu_width * 0.03)
-        right_edge = int(self.menu_x + self.menu_width - self.menu_width * 0.02)
+        right_edge = int(
+            self.menu_x +
+            self.menu_width -
+            self.menu_width *
+            0.02)
 
         frame_x = left_edge
         frame_y = int(self.menu_y + self.menu_height * 0.1)
@@ -130,6 +144,43 @@ class PauseMenu(Interface):
         self.cheats_text_x = frame_x + int(self.menu_width * 0.02)
         self.cheats_text_y = frame_y - int(self.menu_height * 0.04)
         self.cheats_font_size = int(self.menu_height * 0.04)
+
+    def update_score(self, score: int) -> None:
+        self.current_score = score
+
+    def get_next_score(self):
+        scores = self.scores["players"]
+        # print(scores)
+        scores = [s for s in sorted(scores, key=lambda x: x["score"]) if s["score"] >= self.current_score]
+        if not scores:
+            return self.current_score, "You"
+        next_score = scores[0]["score"]
+        next_score_name = scores[0]["pseudo"]
+
+        return next_score, next_score_name
+
+    def draw_score(self):
+        score = self.current_score
+        print(self.scores)
+        score_pos_x = self.menu_x + int(0.1 * self.menu_width)
+        score_pos_y = self.menu_y + int(0.1 * self.menu_height)
+        pr.draw_text(
+            f"Score: {score}",
+            score_pos_x,
+            score_pos_y,
+            self.cheats_font_size,
+            pr.WHITE
+        )
+        next_score_x = score_pos_x
+        next_score_y = score_pos_y + int(0.05 * self.menu_height)
+        next_score, next_score_name = self.get_next_score()
+        pr.draw_text(
+            f"next person to beat: {next_score_name} ({next_score})",
+            next_score_x,
+            next_score_y,
+            self.cheats_font_size,
+            pr.WHITE
+        )
 
     def add_checkbox(self, checkbox: Checkbox,
                      checkbox_name: str = "") -> None:
@@ -185,6 +236,7 @@ class PauseMenu(Interface):
     def update(self) -> str:
         self.draw_background_color()
         self.draw_pause_menu()
+        self.draw_score()
         super().update()
         self.update_cheats()
         result = self.next_state

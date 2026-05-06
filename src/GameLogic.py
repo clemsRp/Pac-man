@@ -9,6 +9,7 @@ from .PauseMenu import PauseMenu
 from .Interfaces import Button
 from .Player import Player
 from .Ghost import Ghost
+from .parser import Parser
 from .Interfaces import Interface
 from .Constants import (
     NORTH,
@@ -53,7 +54,7 @@ CENTER_Y = 0
 class GameLogic(Interface):
     def __init__(
         self,
-        maze: MazeGenerator, config: dict[str, Any],
+        maze: MazeGenerator, parser: Parser,
         screen_width: int, screen_height: int
     ):
         global CENTER_X, CENTER_Y
@@ -65,6 +66,8 @@ class GameLogic(Interface):
         self.screen_width: int = screen_width
         self.screen_height: int = screen_height
 
+        self.config = parser.get_config()
+        self.scores = parser.get_scores()
         self.scale_x: float = self.screen_width / self.maze_width
         self.scale_y: float = self.screen_height / self.maze_height
         self.scale_x = min([self.scale_x, self.scale_y])
@@ -90,13 +93,16 @@ class GameLogic(Interface):
                               color=pr.GRAY,
                               triggered_function=self.pause_action)
         self.add_button(pause_button)
-        self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
+        self.pause_menu = PauseMenu(
+            self.scores,
+            self.screen_width,
+            self.screen_height)
         self.paused = False
         self.total_paused_time = 0.0
         self.pause_started_at: float | None = None
 
         self.score = 0
-        self.life = int(config["lives"])
+        self.life = int(self.config["lives"])
 
         self.t_start = 0.0
 
@@ -147,7 +153,6 @@ class GameLogic(Interface):
         self.points: list[CircleBox] = self.create_points()
         self.super_pacgums: list[CircleBox] = self.create_super_pacgums()
 
-        self.config: dict[str, Any] = config
         self.current_level: int = 0
 
     def reset(self, maze: MazeGenerator = None):
@@ -182,7 +187,10 @@ class GameLogic(Interface):
                               color=pr.GRAY,
                               triggered_function=self.pause_action)
         self.add_button(pause_button)
-        self.pause_menu = PauseMenu(self.screen_width, self.screen_height)
+        self.pause_menu = PauseMenu(
+            self.scores,
+            self.screen_width,
+            self.screen_height)
         self.paused = False
         self.total_paused_time = 0.0
         self.pause_started_at: float | None = None
@@ -240,6 +248,7 @@ class GameLogic(Interface):
         if not self.paused:
             self.paused = True
             self.pause_started_at = time.time()
+            self.pause_menu.update_score(self.score)
         else:
             self.resume_game()
 
@@ -1055,13 +1064,19 @@ class GameLogic(Interface):
                 if ghost.destination is not None:
                     continue
 
-                # if the ghost is not dead we can check for collisions with the player
+                # if the ghost is not dead we can check for collisions with the
+                # player
                 if ghost.hitbox.collides_with(self.player.hitbox):
                     if self.super_pacgum_state:
                         if freeze_ghosts:  # teleport the ghost home since it is frozen
                             self.score += self.config["points_per_ghost"]
                             ghost.x = ghost.initial_x
                             ghost.y = ghost.initial_y
+                            ghost.set_destination(
+                                ghost.initial_x,
+                                ghost.initial_y,
+                                self.get_game_time()
+                            )
                             ghost.update_collision_box()
 
                         else:  # ghost.destination is None

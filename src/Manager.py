@@ -126,7 +126,7 @@ class GameManager:
     def create_window(self, width: int, height: int) -> tuple[int, int]:
         min_width: int = 1200
         min_height: int = 1000
-
+        pr.set_trace_log_level(pr.LOG_ERROR)
         pr.set_window_min_size(min_width, min_height)
 
         if width < min_width:
