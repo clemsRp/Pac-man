@@ -16,7 +16,7 @@ debug:
 	@echo "   l (list)       - Show source code"
 	@echo "   q (quit)       - Quit debugger"
 	@echo ""
-	uv run python3 -m pdb -m pacman.py
+	uv run python3 -m pdb pacman.py $(ARGS)
 
 lint:
 	uv run flake8 . --exclude=.venv
@@ -28,5 +28,17 @@ clean:
 	rm -rf src/__pycache__
 	rm -rf __pycache__
 	rm -rf .vscode
+	rm -rf build dist
+	rm -f pacman.spec
 
-.PHONY: install run debug lint clean fclean                                        
+package:
+	uv run pyinstaller --noconfirm --onedir --windowed pacman.py
+	cp -r assets dist/pacman/
+	mkdir -p dist/pacman/src
+	cp src/lighting.fs dist/pacman/src/
+	cp config.json dist/pacman/
+	cp scores.json dist/pacman/
+	cp pacman_style.rgs dist/pacman/
+	cp README_PACKAGE.md dist/pacman/README.md
+
+.PHONY: install run debug lint clean fclean package                                        

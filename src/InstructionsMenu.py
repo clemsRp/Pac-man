@@ -43,7 +43,6 @@ class InstructionsMenu(Interface):
                              buttons_width,
                              buttons_height,
                              "Back",
-                             pr.RED,
                              self.go_back)
 
         self.add_button(back_button)

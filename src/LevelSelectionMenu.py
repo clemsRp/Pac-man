@@ -83,7 +83,7 @@ class LevelSelectionMenu(Interface):
                 return lambda: self.select_level(lvl)
 
             btn = Button(x, y, self.button_width, self.button_height,
-                         level["name"].upper(), pr.BLUE, make_trigger(level))
+                         level["name"].upper(), make_trigger(level))
             self.add_button(btn)
 
         # Back button at the bottom of the panel
@@ -91,7 +91,7 @@ class LevelSelectionMenu(Interface):
                           int(self.panel_rect.y + self.panel_rect.height -
                               self.button_height - int(self.margin * 1.5)),
                           self.button_width, self.button_height,
-                          "BACK", pr.GRAY, self.go_back)
+                          "BACK", self.go_back)
         self.add_button(back_btn)
 
     def select_level(self, level: dict) -> None:

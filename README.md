@@ -21,6 +21,18 @@ This project is a modern recreation of the classic arcade game **Pacman**, devel
 - Python 3.10
 - `uv` (Python package manager)
 
+### Packaging for Release (itch.io)
+If you want to compile the game into a standalone executable (e.g., to publish it on itch.io or share it with friends who don't have Python installed), you can use the built-in `package` command:
+
+```bash
+make package
+```
+This command uses `PyInstaller` to bundle the Python environment, source code, and all necessary assets (like `config.json`, `scores.json`, textures, and shaders) into a single folder.
+
+After running the command, you will find a `dist/pacman` directory. You can compress this `pacman` folder into a `.zip` file and upload it directly to your itch.io page!
+
+*(Note: You must run this command on the operating system you wish to target. Building on Linux creates a Linux executable, building on Windows creates a Windows `.exe`.)*
+
 ## Configuration
 The game's behavior and progression are entirely driven by a `config.json` file located in the root directory. This allows us to update the config or the scores at anytime while the program is running.
 

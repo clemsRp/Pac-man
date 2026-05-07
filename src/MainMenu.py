@@ -44,14 +44,12 @@ class MainMenu(Interface):
                                   self.window_height * 0.02),
                               button_width, button_height,
                               "Start Game",
-                              pr.GREEN,
                               self.start_game)
 
         instructions_button = Button(center_x,
                                      center_y,
                                      button_width, button_height,
                                      "Instructions",
-                                     pr.GOLD,
                                      self.instructions_menu)
 
         exit_button = Button(center_x,
@@ -59,7 +57,6 @@ class MainMenu(Interface):
                                  self.window_height * 0.02),
                              button_width, button_height,
                              "Exit",
-                             pr.RED,
                              self.exit_game)
         pac_size = int(self.window_height * 0.12)
         self.background_pacman = Player(30, 30, pac_size)

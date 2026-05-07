@@ -87,7 +87,6 @@ class Button:
                  width: int,
                  height: int,
                  text: str,
-                 color: pr.Color,
                  triggered_function: Callable):
         """
         Initialize a Button instance.
@@ -103,14 +102,11 @@ class Button:
                 int: The height of the button.
             text
                 str: The text displayed on the button.
-            color
-                pr.Color: The base color of the button.
             triggered_function
                 Callable: The function to call when the button is clicked.
         """
         self.rect: pr.Rectangle = pr.Rectangle(x, y, width, height)
 
-        self.color: pr.Color = color
         self.text: str = text
         self.triggered_function: Callable = triggered_function
 

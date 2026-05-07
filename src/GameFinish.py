@@ -94,14 +94,14 @@ class GameFinish(Interface):
             int(2 / 3 * self.screen_height + 2.2 * FONT_SIZE),
             btn_width - 5,
             2 * FONT_SIZE,
-            "Save", pr.RED, self.save_data
+            "Save", self.save_data
         )
         skip_button: Button = Button(
             int(0.5 * self.screen_width),
             int(2 / 3 * self.screen_height + 2.2 * FONT_SIZE),
             btn_width,
             2 * FONT_SIZE,
-            "Skip", pr.RED, self.skip
+            "Skip", self.skip
         )
 
         self.add_button(save_button)

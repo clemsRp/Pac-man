@@ -1,5 +1,6 @@
 from .Interfaces import Interface, Button, Checkbox, Spinner
 from .Constants import (PAUSE_MENU,
+                        MAIN_MENU,
                         GAME_LOGIC,
                         INVINCIBILITY,
                         REMOVE_COLLISIONS,
@@ -48,19 +49,32 @@ class PauseMenu(Interface):
         buttons_height = self.menu_height // 15
         padding_bottom = int(self.menu_height * 0.05)
 
-        resume_button_x = int(self.menu_x + (self.menu_width -
-                                             buttons_width) / 2)
+        resume_button_x = int(
+            self.menu_x + (self.menu_width / 2 - buttons_width)) - 10
 
         resume_button_y = int(self.menu_y +
                               self.menu_height -
                               buttons_height -
                               padding_bottom)
+        return_to_main_menu_button_x = int(self.menu_x +
+                                           (self.menu_width / 2)) + 10
+        return_to_main_menu_button_y = int(self.menu_y +
+                                           self.menu_height -
+                                           buttons_height -
+                                           padding_bottom)
+        return_to_main_menu_button = Button(return_to_main_menu_button_x,
+                                            return_to_main_menu_button_y,
+                                            buttons_width,
+                                            buttons_height,
+                                            "Return to Main Menu",
+                                            self.return_to_main_menu)
+        self.add_button(return_to_main_menu_button)
+
         resume_button = Button(resume_button_x,
                                resume_button_y,
                                buttons_width,
                                buttons_height,
                                "Resume Game",
-                               pr.RED,
                                self.resume_game)
 
         self.cheats_gui: dict[str, Checkbox | Spinner] = {}
@@ -158,6 +172,15 @@ class PauseMenu(Interface):
         self.cheats_text_x = frame_x + int(self.menu_width * 0.02)
         self.cheats_text_y = frame_y - int(self.menu_height * 0.04)
         self.cheats_font_size = int(self.menu_height * 0.04)
+
+    def return_to_main_menu(self) -> None:
+        """
+        Return to the main menu.
+
+        Returns:
+            None: No return value.
+        """
+        self.next_state = MAIN_MENU
 
     def update_score(self, score: int) -> None:
         """

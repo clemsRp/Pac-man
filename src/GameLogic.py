@@ -24,6 +24,7 @@ from .Constants import (
     GAME_OVER,
     GAME_WON,
     AK47_ALWAYS_ACTIVE,
+    MAIN_MENU,
     INVINCIBILITY,
     NB_BOUNCES,
     REMOVE_COLLISIONS,
@@ -103,7 +104,6 @@ class GameLogic(Interface):
                               buttons_width,
                               buttons_height,
                               "Pause Game",
-                              color=pr.GRAY,
                               triggered_function=self.pause_action)
         self.add_button(pause_button)
         self.pause_menu = PauseMenu(
@@ -208,7 +208,6 @@ class GameLogic(Interface):
                               buttons_width,
                               buttons_height,
                               "Pause Game",
-                              color=pr.GRAY,
                               triggered_function=self.pause_action)
         self.add_button(pause_button)
         self.pause_menu = PauseMenu(
@@ -1638,6 +1637,9 @@ class GameLogic(Interface):
             self.sync_remove_collisions_state()
             if pause_menu_result == GAME_LOGIC:
                 self.resume_game()
+            elif pause_menu_result == MAIN_MENU:
+                self.paused = False
+                return MAIN_MENU
 
         texture = self.assets["pacman"][1]
         scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
