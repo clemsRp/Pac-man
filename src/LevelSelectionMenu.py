@@ -10,12 +10,23 @@ class LevelSelectionMenu(Interface):
                  window_width: int,
                  window_height: int,
                  parser: Parser) -> None:
+        """
+        Initialize the Level Selection Menu interface.
+
+        Args:
+            window_width
+                int: The width of the game window.
+            window_height
+                int: The height of the game window.
+            parser
+                Parser: The configuration parser instance.
+        """
         super().__init__()
         self.window_width = window_width
         self.window_height = window_height
         self.parser = parser
         self.next_state = LEVEL_SELECTION
-        self.selected_level = None
+        self.selected_level: dict | None = None
 
         self.button_width = int(0.18 * self.window_width)
         self.button_height = int(0.05 * self.window_height)
@@ -24,8 +35,13 @@ class LevelSelectionMenu(Interface):
 
         self.setup_buttons()
 
-    def setup_buttons(self):
-        """creates the buttons for the level selection menu"""
+    def setup_buttons(self) -> None:
+        """
+        Create the buttons for the level selection menu.
+
+        Returns:
+            None: No return value.
+        """
         self.buttons = []
         levels = self.parser.get_config().get("levels", [])
 
@@ -53,7 +69,17 @@ class LevelSelectionMenu(Interface):
             x = start_x + col * (self.button_width + self.margin)
             y = start_y + row * (self.button_height + self.margin)
 
-            def make_trigger(lvl) -> Callable:
+            def make_trigger(lvl: dict) -> Callable:
+                """
+                Create a callback function for selecting a specific level.
+
+                Args:
+                    lvl
+                        dict: The level configuration dictionary.
+
+                Returns:
+                    Callable: The callback function.
+                """
                 return lambda: self.select_level(lvl)
 
             btn = Button(x, y, self.button_width, self.button_height,
@@ -68,17 +94,37 @@ class LevelSelectionMenu(Interface):
                           "BACK", pr.GRAY, self.go_back)
         self.add_button(back_btn)
 
-    def select_level(self, level):
-        """selects the level and goes to the game logic"""
+    def select_level(self, level: dict) -> None:
+        """
+        Select a level and transition to the game logic state.
+
+        Args:
+            level
+                dict: The selected level configuration dictionary.
+
+        Returns:
+            None: No return value.
+        """
         self.selected_level = level
         self.next_state = GAME_LOGIC
 
-    def go_back(self):
-        """goes back to the main menu"""
+    def go_back(self) -> None:
+        """
+        Go back to the main menu state.
+
+        Returns:
+            None: No return value.
+        """
         self.next_state = MAIN_MENU
 
     def update(self) -> str:
-        """main logic of the level selection menu"""
+        """
+        Main logic of the level selection menu, rendering the UI and
+        updating state.
+
+        Returns:
+            str: The name of the next state to transition to.
+        """
         pr.draw_rectangle_rec(self.panel_rect, pr.fade(pr.DARKGRAY, 0.8))
         pr.draw_rectangle_lines_ex(self.panel_rect, 3, pr.GOLD)
 

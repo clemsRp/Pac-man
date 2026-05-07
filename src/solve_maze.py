@@ -5,14 +5,37 @@ from .Constants import DELTA
 
 
 def manhattan(a: tuple[int, int], b: tuple[int, int]) -> int:
-    """Return the Manhattan distance between two points."""
+    """
+    Return the Manhattan distance between two points.
+
+    Args:
+        a
+            tuple[int, int]: The first point.
+        b
+            tuple[int, int]: The second point.
+
+    Returns:
+        int: The Manhattan distance.
+    """
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 def reconstruct_path(
     came_from: dict[tuple[int, int], tuple[int, int]], end: tuple[int, int]
 ) -> list[tuple[int, int]]:
-    """Reconstruct the path from start to the end."""
+    """
+    Reconstruct the path from start to the end.
+
+    Args:
+        came_from
+            dict[tuple[int, int], tuple[int, int]]: Dictionary mapping
+                each node to its predecessor.
+        end
+            tuple[int, int]: The target node to end the path reconstruction.
+
+    Returns:
+        list[tuple[int, int]]: The reconstructed path from start to end.
+    """
     node = end
     path: list[tuple[int, int]] = [node]
     while node in came_from:
@@ -26,11 +49,23 @@ def find_path(
     maze: list[list[int]],
     start: tuple[int, int],
     end: tuple[int, int],
-    best_only=True
+    best_only: bool = True
 ) -> list[list[tuple[int, int]]]:
-    """Find the shortest path from start to end in the maze.
-    start and end not necessarily
-    the start and end of the maze, but any two cells.
+    """
+    Find the shortest path from start to end in the maze.
+
+    Args:
+        maze
+            list[list[int]]: The maze grid.
+        start
+            tuple[int, int]: The starting cell coordinate.
+        end
+            tuple[int, int]: The ending cell coordinate.
+        best_only
+            bool: Whether to only return the single best path.
+
+    Returns:
+        list[list[tuple[int, int]]]: A list of paths (list of coordinates).
     """
 
     def astar(maze: list[list[int]],
@@ -38,6 +73,23 @@ def find_path(
               end: tuple[int, int],
               result: list[tuple[int, int]] | None = None,
               ) -> list[tuple[int, int]]:
+        """
+        A* algorithm to find a path in the maze.
+
+        Args:
+            maze
+                list[list[int]]: The maze grid.
+            start
+                tuple[int, int]: The starting cell.
+            end
+                tuple[int, int]: The ending cell.
+            result
+                list[tuple[int, int]] | None: The result from a previous
+                path search, used for penalty.
+
+        Returns:
+            list[tuple[int, int]]: The optimal path found.
+        """
         if result is None:
             result = []
         last_path: set[tuple[int, int]] = set(result)

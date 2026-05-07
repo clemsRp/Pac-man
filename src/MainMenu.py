@@ -1,8 +1,8 @@
 from .Interfaces import Interface, Button
-from .Constants import MAIN_MENU, GAME_LOGIC, LEVEL_SELECTION, INSTRUCTIONS_MENU
+from .Constants import MAIN_MENU, LEVEL_SELECTION, INSTRUCTIONS_MENU
 from .Constants import EXIT, MAX_SCORES_SHOWN
 from .Constants import PACMAN_SPRITE_QUALITY
-from .Physics import CollisionBox, CircleBox
+from .Physics import CircleBox
 import pyray as pr
 from src.parser import Parser
 from src.Player import Player
@@ -13,6 +13,17 @@ class MainMenu(Interface):
                  window_width: int,
                  window_height: int,
                  parser: Parser) -> None:
+        """
+        Initialize the Main Menu interface.
+
+        Args:
+            window_width
+                int: The width of the game window.
+            window_height
+                int: The height of the game window.
+            parser
+                Parser: The configuration parser instance.
+        """
         super().__init__()
         self.window_width = window_width
         self.window_height = window_height
@@ -53,7 +64,7 @@ class MainMenu(Interface):
         pac_size = int(self.window_height * 0.12)
         self.background_pacman = Player(30, 30, pac_size)
 
-        self.background_points: list[CollisionBox] = []
+        self.background_points: list[CircleBox] = []
 
         self.reset_pacman()
 
@@ -63,7 +74,12 @@ class MainMenu(Interface):
         self.add_button(exit_button)
 
     def compute_scores(self) -> None:
-        """computes the scores of the players to show it in the leaderboard"""
+        """
+        Compute the scores of the players to show in the leaderboard.
+
+        Returns:
+            None: No return value.
+        """
         self.scores = self.parser.get_scores().get("players", [])
         self.scores = sorted(self.scores,
                              key=lambda x: x["score"],
@@ -92,19 +108,28 @@ class MainMenu(Interface):
             self.best_player_name = res
             self.best_player_score = player_totals[res]
 
-    def reset_pacman(self):
+    def reset_pacman(self) -> None:
         """
-        resets the pacman in the background
-        of the main menu so it restarts
+        Reset the pacman in the background of the main menu so it
+        restarts its animation.
+
+        Returns:
+            None: No return value.
         """
         self.background_pacman.x = -self.background_pacman.radius
         self.background_pacman.y = self.background_pacman.radius
         self.direction = "right"
         self.background_points = self.create_points(
-            self.background_pacman.y, self.window_width)
+            int(self.background_pacman.y), self.window_width)
 
-    def update_background_pacman(self):
-        """updates the pacman in the background of the main menu"""
+    def update_background_pacman(self) -> None:
+        """
+        Update the position and state of the pacman in the background
+        of the main menu.
+
+        Returns:
+            None: No return value.
+        """
         # Wait until points are fully animated before moving
         nb_points_to_show = int(
             (pr.get_time() -
@@ -135,14 +160,20 @@ class MainMenu(Interface):
                 self.background_pacman.y = next_y
 
             self.background_points = self.create_points(
-                self.background_pacman.y,
+                int(self.background_pacman.y),
                 self.window_width)
             self.direction = "left" if self.direction == "right" else "right"
         self.background_pacman.update_collision_box()
         self.check_points_collision()
 
     def check_points_collision(self) -> None:
-        """checks if the points collide with the pacman"""
+        """
+        Check if the animated pacman in the background collides with
+        any points.
+
+        Returns:
+            None: No return value.
+        """
         if self.direction == "right":
             to_remove = [i for i in self.background_points if
                          i.center_x <= self.background_pacman.x]
@@ -153,13 +184,24 @@ class MainMenu(Interface):
         self.background_points = [i for i in self.background_points if
                                   i not in to_remove]
 
-    def create_points(self, y: int, width: int) -> list[CollisionBox]:
-        """creates the points in the background of the main menu"""
+    def create_points(self, y: int, width: int) -> list[CircleBox]:
+        """
+        Create the line of points in the background of the main menu.
+
+        Args:
+            y
+                int: The y coordinate of the points line.
+            width
+                int: The width of the screen.
+
+        Returns:
+            list[CircleBox]: A list of circular points.
+        """
         radius = self.background_pacman.radius
         cell_size = radius * 2
         nb_points = int(width // cell_size) + 2
 
-        points: list[CollisionBox] = []
+        points: list[CircleBox] = []
         for i in range(nb_points):
             cx = radius + i * cell_size
             cy = y
@@ -168,7 +210,16 @@ class MainMenu(Interface):
         return points
 
     def get_direciton_from_str(self, direc: str) -> int:
-        """returns the direction as an int"""
+        """
+        Return the direction multiplier as an int.
+
+        Args:
+            direc
+                str: The direction ("right" or "left").
+
+        Returns:
+            int: 1 for right, -1 for left.
+        """
         direc = direc.lower()
         if direc == "right":
             return 1
@@ -177,9 +228,19 @@ class MainMenu(Interface):
         else:
             raise ValueError("Invalid direction")
 
-    def get_n_first_points(self, n: int, direction: str) -> list[CollisionBox]:
-        """returns the first n points that need
-            to be drawn in the background of the main menu"""
+    def get_n_first_points(self, n: int, direction: str) -> list[CircleBox]:
+        """
+        Return the first n points that need to be drawn in the background.
+
+        Args:
+            n
+                int: The number of points to return.
+            direction
+                str: The movement direction of pacman ("right" or "left").
+
+        Returns:
+            list[CircleBox]: A list of points to be drawn.
+        """
         if direction == "right":
             points = sorted(self.background_points,
                             key=lambda x: x.center_x)
@@ -188,8 +249,13 @@ class MainMenu(Interface):
                             key=lambda x: x.center_x, reverse=True)
         return points[:n]
 
-    def draw_background_points(self):
-        """draws the points in the background of the main menu"""
+    def draw_background_points(self) -> None:
+        """
+        Draw the points in the background of the main menu.
+
+        Returns:
+            None: No return value.
+        """
         nb_points_to_show = int((pr.get_time() -
                                  self.last_create_points_time) /
                                 self.time_between_points_creation)
@@ -201,8 +267,13 @@ class MainMenu(Interface):
             cy = point.center_y
             pr.draw_circle(int(cx), int(cy), radius, pr.WHITE)
 
-    def draw_background_pacman(self):
-        """draws the animated pacman in the background of the main menu"""
+    def draw_background_pacman(self) -> None:
+        """
+        Draw the animated pacman in the background of the main menu.
+
+        Returns:
+            None: No return value.
+        """
         nb_points_to_show = int(
             (pr.get_time() -
              self.last_create_points_time) /
@@ -234,15 +305,31 @@ class MainMenu(Interface):
                 pr.WHITE
             )
 
-    def start_game(self):
-        """starts the game, goes to the level selection menu"""
+    def start_game(self) -> None:
+        """
+        Start the game, transition to the level selection menu.
+
+        Returns:
+            None: No return value.
+        """
         self.next_state = LEVEL_SELECTION
 
-    def instructions_menu(self):
-        """goes to the instructions menu"""
+    def instructions_menu(self) -> None:
+        """
+        Transition to the instructions menu.
+
+        Returns:
+            None: No return value.
+        """
         self.next_state = INSTRUCTIONS_MENU
 
     def update(self) -> str:
+        """
+        Update the logic and draw elements of the main menu.
+
+        Returns:
+            str: The next state of the game loop.
+        """
         self.update_background_pacman()
         self.draw_background_points()
         self.draw_background_pacman()
@@ -251,8 +338,13 @@ class MainMenu(Interface):
         return self.next_state
 
     def draw_leaderboard(self) -> None:
-        """Dessine le tableau des
-        scores avec des dimensions et polices agrandies"""
+        """
+        Draw the leaderboard with the top player scores and the best
+        player overall.
+
+        Returns:
+            None: No return value.
+        """
 
         if len(self.scores) == 0:
             return
@@ -360,5 +452,11 @@ class MainMenu(Interface):
                      del_x, separator_y + font_size + 10,
                      font_size + 10, pr.YELLOW)
 
-    def exit_game(self):
+    def exit_game(self) -> None:
+        """
+        Exit the game entirely.
+
+        Returns:
+            None: No return value.
+        """
         self.next_state = EXIT

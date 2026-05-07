@@ -13,6 +13,21 @@ class Checkbox:
                  size: int,
                  text: str,
                  text_color: pr.Color = pr.WHITE):
+        """
+        Initialize a Checkbox instance.
+
+        Args:
+            x
+                int: The x coordinate of the checkbox.
+            y
+                int: The y coordinate of the checkbox.
+            size
+                int: The size (width and height) of the checkbox.
+            text
+                str: The label text for the checkbox.
+            text_color
+                pr.Color: The color of the label text.
+        """
         self.rect: pr.Rectangle = pr.Rectangle(x, y, size, size)
         self.text: str = text
         self.text_color: pr.Color = text_color
@@ -24,16 +39,37 @@ class Checkbox:
     # property allows to use Checkbox.checked
     @property
     def checked(self) -> bool:
-        return self._checked_ptr[0]
+        """
+        Get the current checked state of the checkbox.
+
+        Returns:
+            bool: True if checked, False otherwise.
+        """
+        return bool(self._checked_ptr[0])
 
     # setter allows to use Checkbox.checked = True
     @checked.setter
-    def checked(self, value: bool):
+    def checked(self, value: bool) -> None:
+        """
+        Set the checked state of the checkbox.
+
+        Args:
+            value
+                bool: The new checked state.
+
+        Returns:
+            None: No return value.
+        """
         self._checked_ptr[0] = value
 
-    def update(self):
-        """draws the checkbox using pyray's gui_check_box and its text
-        by default the text is at the right so change it"""
+    def update(self) -> None:
+        """
+        Draw the checkbox using pyray's gui_check_box and its text.
+        By default the text is at the right, so change it to the left.
+
+        Returns:
+            None: No return value.
+        """
         font_size = int(self.rect.height)
         text_width = pr.measure_text(self.text, font_size)
 
@@ -53,14 +89,38 @@ class Button:
                  text: str,
                  color: pr.Color,
                  triggered_function: Callable):
+        """
+        Initialize a Button instance.
+
+        Args:
+            x
+                int: The x coordinate of the button.
+            y
+                int: The y coordinate of the button.
+            width
+                int: The width of the button.
+            height
+                int: The height of the button.
+            text
+                str: The text displayed on the button.
+            color
+                pr.Color: The base color of the button.
+            triggered_function
+                Callable: The function to call when the button is clicked.
+        """
         self.rect: pr.Rectangle = pr.Rectangle(x, y, width, height)
 
         self.color: pr.Color = color
         self.text: str = text
         self.triggered_function: Callable = triggered_function
 
-    def update(self):
-        """draws the button on the screen and checks if it was clicked"""
+    def update(self) -> None:
+        """
+        Draw the button on the screen and check if it was clicked.
+
+        Returns:
+            None: No return value.
+        """
         if pr.gui_button(self.rect, self.text):
             self.triggered_function()
 
@@ -76,6 +136,29 @@ class Spinner:
                  max_value: int,
                  default_value: int = 0,
                  text_color: pr.Color = pr.WHITE):
+        """
+        Initialize a Spinner instance.
+
+        Args:
+            x
+                int: The x coordinate of the spinner.
+            y
+                int: The y coordinate of the spinner.
+            width
+                int: The width of the spinner.
+            height
+                int: The height of the spinner.
+            text
+                str: The label text for the spinner.
+            min_value
+                int: The minimum allowed value.
+            max_value
+                int: The maximum allowed value.
+            default_value
+                int: The initial value of the spinner.
+            text_color
+                pr.Color: The color of the label text.
+        """
         self.rect: pr.Rectangle = pr.Rectangle(x, y, width, height)
         self.text: str = text
         self.text_color: pr.Color = text_color
@@ -90,16 +173,37 @@ class Spinner:
     # property allows to use Spinner.value
     @property
     def value(self) -> int:
-        return self._value_ptr[0]
+        """
+        Get the current integer value of the spinner.
+
+        Returns:
+            int: The current value.
+        """
+        return int(self._value_ptr[0])
 
     # setter allows to use Spinner.value = 5
     @value.setter
-    def value(self, val: int):
+    def value(self, val: int) -> None:
+        """
+        Set the integer value of the spinner.
+
+        Args:
+            val
+                int: The new integer value.
+
+        Returns:
+            None: No return value.
+        """
         self._value_ptr[0] = val
 
-    def update(self):
-        """draws the spinner using pyray's gui_spinner and its text
-        by default the text is at the right so change it"""
+    def update(self) -> None:
+        """
+        Draw the spinner using pyray's gui_spinner and its text.
+        By default the text is at the right, so change it to the left.
+
+        Returns:
+            None: No return value.
+        """
         font_size = int(self.rect.height)
         text_width = pr.measure_text(self.text, font_size)
 
@@ -118,15 +222,30 @@ class Spinner:
 
 
 class Interface(ABC):
-    """class for the interfaces.
-    we need to specify where buttons are and what they do """
+    """
+    Base class for the user interfaces.
+    """
 
     def __init__(self) -> None:
+        """
+        Initialize the interface with empty lists for UI elements.
+        """
         self.buttons: list[Button] = []
         self.checkboxes: list[Checkbox] = []
         self.spinners: list[Spinner] = []
 
     def get_rotation_from_str(self, direction: str) -> int:
+        """
+        Get the rotation angle in degrees from a direction string.
+
+        Args:
+            direction
+                str: The direction as a string (e.g. "right", "left",
+                "up", "down").
+
+        Returns:
+            int: The rotation angle in degrees.
+        """
         if direction == "right":
             return 90
         elif direction == "left":
@@ -138,37 +257,104 @@ class Interface(ABC):
         return 90
 
     def add_button(self, button: Button) -> None:
-        """This function adds a button to the interface"""
+        """
+        Add a button to the interface.
+
+        Args:
+            button
+                Button: The button instance to add.
+
+        Returns:
+            None: No return value.
+        """
         self.buttons.append(button)
 
     def remove_button(self, button: Button) -> None:
-        """This function removes a button from the interface"""
+        """
+        Remove a button from the interface.
+
+        Args:
+            button
+                Button: The button instance to remove.
+
+        Returns:
+            None: No return value.
+        """
         self.buttons.remove(button)
 
     def add_checkbox(self, checkbox: Checkbox) -> None:
-        """This function adds a checkbox to the interface"""
+        """
+        Add a checkbox to the interface.
+
+        Args:
+            checkbox
+                Checkbox: The checkbox instance to add.
+
+        Returns:
+            None: No return value.
+        """
         self.checkboxes.append(checkbox)
 
     def remove_checkbox(self, checkbox: Checkbox) -> None:
-        """This function removes a checkbox from the interface"""
+        """
+        Remove a checkbox from the interface.
+
+        Args:
+            checkbox
+                Checkbox: The checkbox instance to remove.
+
+        Returns:
+            None: No return value.
+        """
         self.checkboxes.remove(checkbox)
 
     def add_spinner(self, spinner: Spinner) -> None:
-        """This function adds a spinner to the interface"""
+        """
+        Add a spinner to the interface.
+
+        Args:
+            spinner
+                Spinner: The spinner instance to add.
+
+        Returns:
+            None: No return value.
+        """
         self.spinners.append(spinner)
 
     def remove_spinner(self, spinner: Spinner) -> None:
-        """This function removes a spinner from the interface"""
+        """
+        Remove a spinner from the interface.
+
+        Args:
+            spinner
+                Spinner: The spinner instance to remove.
+
+        Returns:
+            None: No return value.
+        """
         self.spinners.remove(spinner)
 
     def set_assets(self, assets: dict) -> None:
-        """This function sets the assets for the interface"""
+        """
+        Set the assets dictionary for the interface.
+
+        Args:
+            assets
+                dict: The assets dictionary to store.
+
+        Returns:
+            None: No return value.
+        """
         self.assets = assets
 
     @abstractmethod
     def update(self) -> str:
-        """function for the logic of this interface
-        returns the name of the next state"""
+        """
+        Update the logic of this interface and draw its elements.
+
+        Returns:
+            str: The name of the next state (or an empty string if staying).
+        """
         for button in self.buttons:
             button.update()
         for checkbox in self.checkboxes:

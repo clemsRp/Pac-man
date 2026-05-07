@@ -17,6 +17,17 @@ class PauseMenu(Interface):
                  scores: dict,
                  window_width: int,
                  window_height: int) -> None:
+        """
+        Initialize the Pause Menu interface.
+
+        Args:
+            scores
+                dict: The current high scores dictionary.
+            window_width
+                int: The width of the game window.
+            window_height
+                int: The height of the game window.
+        """
         super().__init__()
         self.next_state = PAUSE_MENU
         self.window_width = window_width
@@ -149,9 +160,27 @@ class PauseMenu(Interface):
         self.cheats_font_size = int(self.menu_height * 0.04)
 
     def update_score(self, score: int) -> None:
+        """
+        Update the current score displayed in the menu.
+
+        Args:
+            score
+                int: The player's current score.
+
+        Returns:
+            None: No return value.
+        """
         self.current_score = score
 
-    def get_next_score(self):
+    def get_next_score(self) -> tuple[int, str]:
+        """
+        Determine the next highest score to beat based on the
+        current score.
+
+        Returns:
+            tuple[int, str]: The next score and the name of the player who
+                holds it.
+        """
         scores = self.scores["players"]
         # print(scores)
         scores = [
@@ -165,7 +194,13 @@ class PauseMenu(Interface):
 
         return next_score, next_score_name
 
-    def draw_score(self):
+    def draw_score(self) -> None:
+        """
+        Draw the current score and the next score to beat on the screen.
+
+        Returns:
+            None: No return value.
+        """
         score = self.current_score
         # print(self.scores)
         score_pos_x = self.menu_x + int(0.1 * self.menu_width)
@@ -211,25 +246,67 @@ class PauseMenu(Interface):
 
     def add_checkbox(self, checkbox: Checkbox,
                      checkbox_name: str = "") -> None:
+        """
+        Add a checkbox to the pause menu cheats dictionary.
+
+        Args:
+            checkbox
+                Checkbox: The checkbox UI element.
+            checkbox_name
+                str: The name associated with the checkbox.
+
+        Returns:
+            None: No return value.
+        """
         self.cheats_gui[checkbox_name] = checkbox
         super().add_checkbox(checkbox)
 
     def add_spinner(self, spinner: Spinner,
                     spinner_name: str = "") -> None:
+        """
+        Add a spinner to the pause menu cheats dictionary.
+
+        Args:
+            spinner
+                Spinner: The spinner UI element.
+            spinner_name
+                str: The name associated with the spinner.
+
+        Returns:
+            None: No return value.
+        """
         self.cheats_gui[spinner_name] = spinner
         super().add_spinner(spinner)
 
-    def resume_game(self):
+    def resume_game(self) -> None:
+        """
+        Resume the game state.
+
+        Returns:
+            None: No return value.
+        """
         self.next_state = GAME_LOGIC
 
-    def draw_background_color(self):
+    def draw_background_color(self) -> None:
+        """
+        Draw the semi-transparent background color over the game.
+
+        Returns:
+            None: No return value.
+        """
         pr.draw_rectangle(0,
                           0,
                           self.window_width,
                           self.window_height,
                           self.background_color)
 
-    def draw_pause_menu(self):
+    def draw_pause_menu(self) -> None:
+        """
+        Draw the pause menu panel, border, and the cheats frame.
+
+        Returns:
+            None: No return value.
+        """
         pr.draw_rectangle(self.menu_x,
                           self.menu_y,
                           self.menu_width,
@@ -253,7 +330,14 @@ class PauseMenu(Interface):
                      self.cheats_font_size,
                      pr.RAYWHITE)
 
-    def update_cheats(self):
+    def update_cheats(self) -> None:
+        """
+        Update the cheats dictionary based on the current states of
+        the UI elements.
+
+        Returns:
+            None: No return value.
+        """
         for cheat_name, gui_element in self.cheats_gui.items():
             if isinstance(gui_element, Checkbox):
                 self.cheats[cheat_name] = gui_element.checked
@@ -261,6 +345,12 @@ class PauseMenu(Interface):
                 self.cheats[cheat_name] = gui_element.value
 
     def draw_ghost(self) -> None:
+        """
+        Draw an animated ghost texture on the pause menu.
+
+        Returns:
+            None: No return value.
+        """
         ghost_x = self.menu_x + int(self.menu_width * 0.1)
         ghost_y = self.menu_y + int(self.menu_height * 0.3)
         index: int = int(((time.time() - self.start_time) * 6) % 3)
@@ -274,6 +364,12 @@ class PauseMenu(Interface):
         )
 
     def update(self) -> str:
+        """
+        Update the logic and draw elements of the pause menu.
+
+        Returns:
+            str: The next state of the game loop.
+        """
         self.draw_background_color()
         self.draw_pause_menu()
         self.draw_score()

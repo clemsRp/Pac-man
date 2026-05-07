@@ -17,6 +17,19 @@ class GameFinish(Interface):
         config: dict,
         scores: dict
     ):
+        """
+        Initialize the Game Finish interface (win/loss screen).
+
+        Args:
+            screen_width
+                int: The width of the game window.
+            screen_height
+                int: The height of the game window.
+            config
+                dict: The game configuration dictionary.
+            scores
+                dict: The current high scores dictionary.
+        """
         super().__init__()
 
         global FONT_SIZE
@@ -33,7 +46,19 @@ class GameFinish(Interface):
         self.won = False
         self.reset(config, scores)
 
-    def reset(self, config, scores) -> None:
+    def reset(self, config: dict, scores: dict) -> None:
+        """
+        Reset the Game Finish state, updating config and scores.
+
+        Args:
+            config
+                dict: The game configuration dictionary.
+            scores
+                dict: The current high scores dictionary.
+
+        Returns:
+            None: No return value.
+        """
         self.state = GAME_WON if self.won else GAME_OVER
 
         self.buttons: list[Button] = []
@@ -47,9 +72,11 @@ class GameFinish(Interface):
             player["score"] for player in scores["players"]
         }
         self.all_scores.add(self.score)
-        self.all_scores = sorted(list(self.all_scores), reverse=True)
+        self.all_scores_list: list[int] = sorted(
+            list(self.all_scores), reverse=True
+        )
 
-        self.rank = self.all_scores.index(self.score) + 1
+        self.rank = self.all_scores_list.index(self.score) + 1
 
         self.last_key_time: float = 0
         self.cursor: bool = False
@@ -81,6 +108,12 @@ class GameFinish(Interface):
         self.add_button(skip_button)
 
     def save_data(self) -> None:
+        """
+        Save the player's score to the highscore file.
+
+        Returns:
+            None: No return value.
+        """
         if self.pseudo == "":
             return
         self.scores["players"].append({
@@ -104,12 +137,34 @@ class GameFinish(Interface):
         self.state = MAIN_MENU
 
     def skip(self) -> None:
+        """
+        Skip saving the score and return to the main menu.
+
+        Returns:
+            None: No return value.
+        """
         self.state = MAIN_MENU
 
     def set_assets(self, assets: dict) -> None:
+        """
+        Set the assets for the Game Finish screen.
+
+        Args:
+            assets
+                dict: The dictionary of loaded game assets.
+
+        Returns:
+            None: No return value.
+        """
         super().set_assets(assets)
 
     def update_pseudo(self) -> None:
+        """
+        Handle keyboard input to update the player's pseudonym.
+
+        Returns:
+            None: No return value.
+        """
         key = pr.get_char_pressed()
 
         while key > 0:
@@ -122,15 +177,25 @@ class GameFinish(Interface):
 
             key = pr.get_char_pressed()
 
-        if pr.is_key_pressed_repeat(pr.KEY_BACKSPACE) or \
-                pr.is_key_pressed(pr.KEY_BACKSPACE):
+        if pr.is_key_pressed_repeat(pr.KeyboardKey.KEY_BACKSPACE) or \
+                pr.is_key_pressed(pr.KeyboardKey.KEY_BACKSPACE):
             self.last_key_time = time.time()
             self.pseudo = self.pseudo[:-1]
 
-        if pr.is_key_pressed(pr.KEY_ENTER):
+        if pr.is_key_pressed(pr.KeyboardKey.KEY_ENTER):
             self.save_data()
 
     def draw_game_win(self, font_size: int) -> None:
+        """
+        Draw the 'GAME WON' screen with a gold coin.
+
+        Args:
+            font_size
+                int: The size of the text to draw.
+
+        Returns:
+            None: No return value.
+        """
         title = "GAME W  N"
         center_title = pr.measure_text(
             title, font_size
@@ -171,6 +236,16 @@ class GameFinish(Interface):
         return
 
     def draw_game_over(self, font_size: int) -> None:
+        """
+        Draw the 'GAME OVER' screen with a skull.
+
+        Args:
+            font_size
+                int: The size of the text to draw.
+
+        Returns:
+            None: No return value.
+        """
         center_title = pr.measure_text(
             "GAME   VER", font_size
         )
@@ -218,6 +293,12 @@ class GameFinish(Interface):
         )
 
     def draw_score_rank(self) -> None:
+        """
+        Draw the player's score, rank, and top percentage on the screen.
+
+        Returns:
+            None: No return value.
+        """
         scores_text: str = f"Score: {self.score}, Rank: {self.rank}"
         center_scores_text = pr.measure_text(
             scores_text, FONT_SIZE
@@ -232,7 +313,7 @@ class GameFinish(Interface):
         )
 
         percent_rank = round(
-            self.rank / len(self.all_scores) * 100,
+            self.rank / len(self.all_scores_list) * 100,
             1
         )
 
@@ -250,6 +331,12 @@ class GameFinish(Interface):
         )
 
     def draw_pseudo(self) -> None:
+        """
+        Draw the text input box for the player's pseudonym.
+
+        Returns:
+            None: No return value.
+        """
         # draw box
 
         border: int = max(1, int(FONT_SIZE * 0.1))
@@ -307,7 +394,13 @@ class GameFinish(Interface):
                 max(1, int(FONT_SIZE * 0.1)), FONT_SIZE, pr.BLACK
             )
 
-    def update(self):
+    def update(self) -> str:
+        """
+        Update the logic and draw elements of the game finish screen.
+
+        Returns:
+            str: The next state of the game loop.
+        """
         if time.time() - self.last_key_time <= 0.7:
             self.cursor = True
         else:

@@ -10,6 +10,7 @@ from .Player import Player
 from .Ghost import Ghost
 from .parser import Parser
 from .Interfaces import Interface
+from typing import Any
 from .Constants import (
     NORTH,
     EAST,
@@ -56,6 +57,19 @@ class GameLogic(Interface):
         maze: MazeGenerator, parser: Parser,
         screen_width: int, screen_height: int
     ):
+        """
+        Initialize the GameLogic interface.
+
+        Args:
+            maze
+                MazeGenerator: The maze generator instance.
+            parser
+                Parser: The configuration parser instance.
+            screen_width
+                int: The width of the game window.
+            screen_height
+                int: The height of the game window.
+        """
         global CENTER_X, CENTER_Y
         super().__init__()
         self.maze: MazeGenerator = maze
@@ -140,8 +154,8 @@ class GameLogic(Interface):
                 (0.5 + self.maze_height // 2) * self.scale_y
             ),
             SIZE_PACMAN,
-            hitbox_w,
-            hitbox_h
+            int(hitbox_w),
+            int(hitbox_h)
         )
 
         self.ghosts: list[Ghost] = []
@@ -155,7 +169,17 @@ class GameLogic(Interface):
 
         self.current_level: int = 0
 
-    def reset(self, maze: MazeGenerator = None):
+    def reset(self, maze: MazeGenerator | None = None) -> None:
+        """
+        Reset the game logic state, optionally with a new maze.
+
+        Args:
+            maze
+                MazeGenerator | None: An optional new maze to load.
+
+        Returns:
+            None: No return value.
+        """
         global CENTER_X, CENTER_Y
         if maze is not None:
             self.maze = maze
@@ -193,7 +217,7 @@ class GameLogic(Interface):
             self.screen_height)
         self.paused = False
         self.total_paused_time = 0.0
-        self.pause_started_at: float | None = None
+        self.pause_started_at = None
 
         self.t_start = self.get_game_time()
         CENTER_X = int(
@@ -225,8 +249,8 @@ class GameLogic(Interface):
                 (0.5 + self.maze_height // 2) * self.scale_y
             ),
             SIZE_PACMAN,
-            hitbox_w,
-            hitbox_h
+            int(hitbox_w),
+            int(hitbox_h)
         )
 
         self._init_raytracing()
@@ -244,7 +268,13 @@ class GameLogic(Interface):
             paused_time += now - self.pause_started_at
         return now - paused_time
 
-    def pause_action(self):
+    def pause_action(self) -> None:
+        """
+        Trigger the pause state of the game.
+
+        Returns:
+            None: No return value.
+        """
         if not self.paused:
             self.paused = True
             self.pause_started_at = time.time()
@@ -252,7 +282,13 @@ class GameLogic(Interface):
         else:
             self.resume_game()
 
-    def resume_game(self):
+    def resume_game(self) -> None:
+        """
+        Resume the game from the paused state.
+
+        Returns:
+            None: No return value.
+        """
         if self.paused and self.pause_started_at is not None:
             self.total_paused_time += time.time() - self.pause_started_at
             self.pause_started_at = None
@@ -263,8 +299,20 @@ class GameLogic(Interface):
         x: float,
         y: float,
     ) -> tuple[int, int]:
-        """get the position of the nearest
-        walkable cell center to the given position"""
+        """
+        Get the position of the nearest walkable cell center to the
+        given coordinates.
+
+        Args:
+            x
+                float: The starting x coordinate.
+            y
+                float: The starting y coordinate.
+
+        Returns:
+            tuple[int, int]: The x and y coordinates of the nearest
+                walkable cell center.
+        """
         best_x = int(x)
         best_y = int(y)
         best_distance = None
@@ -286,8 +334,13 @@ class GameLogic(Interface):
         return best_x, best_y
 
     def sync_remove_collisions_state(self) -> None:
-        """sync the playerposition with the nearest
-        walkable cell after the remove_collisions cheat is disabled"""
+        """
+        Sync the player position with the nearest walkable cell after the
+        remove_collisions cheat is disabled.
+
+        Returns:
+            None: No return value.
+        """
         remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
         # means that we just disabled remove collisions
         if self.remove_collisions_active and not remove_collisions:
@@ -301,9 +354,19 @@ class GameLogic(Interface):
             self.player.try_direction = (0, 0)
             self.player.update_collision_box()
 
-        self.remove_collisions_active = remove_collisions
+        self.remove_collisions_active = bool(remove_collisions)
 
-    def set_assets(self, assets: dict):
+    def set_assets(self, assets: dict) -> None:
+        """
+        Set and initialize game assets and entities.
+
+        Args:
+            assets
+                dict: The dictionary containing all loaded assets.
+
+        Returns:
+            None: No return value.
+        """
         super().set_assets(assets)
         self.ghosts = [
             Ghost(
@@ -348,6 +411,13 @@ class GameLogic(Interface):
     def create_collision_boxs(
         self,
     ) -> dict[str, list[list[list[RectangleBox]]]]:
+        """
+        Create the collision boxes for the maze walls.
+
+        Returns:
+            dict[str, list[list[list[RectangleBox]]]]: A dictionary of
+                collision boxes for walls and corners.
+        """
         collision_boxs = {}
 
         boxes: list[list[list[RectangleBox]]] = [[
@@ -437,8 +507,13 @@ class GameLogic(Interface):
         return collision_boxs
 
     def _build_wallmap(self) -> np.ndarray:
-        """Précalcule un array booléen
-           (H_px, W_px) : True = pixel dans un mur."""
+        """
+        Precalculate a boolean array representing the wall pixels for
+        raytracing.
+
+        Returns:
+            np.ndarray: A 2D boolean array where True indicates a wall pixel.
+        """
         cell_w, cell_h = self.get_cell_pixel_size()
         H = self.maze_height * cell_h
         W = self.maze_width * cell_w
@@ -484,8 +559,13 @@ class GameLogic(Interface):
 
         return wall
 
-    def _init_raytracing(self):
-        """initializes GPU ray tracing by creating wallmap texture"""
+    def _init_raytracing(self) -> None:
+        """
+        Initialize GPU ray tracing by creating the wallmap texture and shader.
+
+        Returns:
+            None: No return value.
+        """
         if hasattr(self, "wallmap_texture"):
             pr.unload_texture(self.wallmap_texture)
         if hasattr(self, "shader"):
@@ -498,19 +578,25 @@ class GameLogic(Interface):
         wallmap_rgba[self._wallmap] = [255, 255, 255, 255]
 
         img = pr.gen_image_color(width, height, pr.BLANK)
-        self.wallmap_texture = pr.load_texture_from_image(img)
+        self.wallmap_texture: pr.Texture = pr.load_texture_from_image(img)
         pr.unload_image(img)
 
         data_ptr = pr.ffi.cast("void *", wallmap_rgba.ctypes.data)
         pr.update_texture(self.wallmap_texture, data_ptr)
 
-        self.shader = pr.load_shader("", "src/lighting.fs")
+        self.shader: pr.Shader = pr.load_shader("", "src/lighting.fs")
         self.maze_size_loc = pr.get_shader_location(self.shader, "mazeSize")
         self.light_pos_loc = pr.get_shader_location(self.shader, "lightPos")
         self.radius_loc = pr.get_shader_location(self.shader, "radius")
         self.color_loc = pr.get_shader_location(self.shader, "lightColor")
 
     def create_points(self) -> list[CircleBox]:
+        """
+        Create the list of regular pacgum points in the maze.
+
+        Returns:
+            list[CircleBox]: A list of circular collision boxes for points.
+        """
         points = []
         for y in range(self.maze_height):
             for x in range(self.maze_width):
@@ -535,6 +621,13 @@ class GameLogic(Interface):
         return points
 
     def create_super_pacgums(self) -> list[CircleBox]:
+        """
+        Create the list of super pacgum power-ups in the maze corners.
+
+        Returns:
+            list[CircleBox]: A list of circular collision boxes for super
+                pacgums.
+        """
         super_pacgums = []
         for x in [0, self.maze_width - 1]:
             for y in [0, self.maze_height - 1]:
@@ -553,7 +646,13 @@ class GameLogic(Interface):
                 )
         return super_pacgums
 
-    def draw_maze(self):
+    def draw_maze(self) -> None:
+        """
+        Draw the maze walls based on the grid data.
+
+        Returns:
+            None: No return value.
+        """
         for y in range(self.maze_height):
             for x in range(self.maze_width):
                 start_x = int(x * self.scale_x)
@@ -642,6 +741,18 @@ class GameLogic(Interface):
                                       WALL_COLOR)
 
     def create_future_box(self, new_x: float, new_y: float) -> CollisionBox:
+        """
+        Create a predicted collision box for a given future position.
+
+        Args:
+            new_x
+                float: The future x coordinate.
+            new_y
+                float: The future y coordinate.
+
+        Returns:
+            CollisionBox: The future collision box.
+        """
         if isinstance(self.player.box, CircleBox):
             return CircleBox(new_x, new_y, float(self.player.radius))
         elif isinstance(self.player.box, RectangleBox):
@@ -657,6 +768,20 @@ class GameLogic(Interface):
 
     def check_collision_x(self, box_y: int, new_x: float,
                           future_box_x: CollisionBox) -> bool:
+        """
+        Check for horizontal collisions with walls.
+
+        Args:
+            box_y
+                int: The current cell y index.
+            new_x
+                float: The predicted new x position.
+            future_box_x
+                CollisionBox: The predicted horizontal collision box.
+
+        Returns:
+            bool: True if a collision occurs, False otherwise.
+        """
 
         collision_x = False
 
@@ -677,6 +802,20 @@ class GameLogic(Interface):
 
     def check_collision_y(self, box_x: int, new_y: float,
                           future_box_y: CollisionBox) -> bool:
+        """
+        Check for vertical collisions with walls.
+
+        Args:
+            box_x
+                int: The current cell x index.
+            new_y
+                float: The predicted new y position.
+            future_box_y
+                CollisionBox: The predicted vertical collision box.
+
+        Returns:
+            bool: True if a collision occurs, False otherwise.
+        """
         collision_y = False
 
         for dy in [-1, 0, 1]:
@@ -697,9 +836,25 @@ class GameLogic(Interface):
     def collision_events(
         self,
         new_x: float, new_y: float,
-        ghost: Ghost | None = None,
+        ghost: Any = None,
         ignore_collisions: bool = False
-    ):
+    ) -> None:
+        """
+        Handle collision events and update entity positions accordingly.
+
+        Args:
+            new_x
+                float: The target x coordinate.
+            new_y
+                float: The target y coordinate.
+            ghost
+                Any: The ghost entity to check (defaults to player if None).
+            ignore_collisions
+                bool: If True, ignore walls and forcefully move the entity.
+
+        Returns:
+            None: No return value.
+        """
         hit = self.player.hitbox
         cond1: bool = new_x + hit.radius < \
             self.scale_x * self.maze_width
@@ -747,9 +902,23 @@ class GameLogic(Interface):
 
     def can_move_direction(
         self,
-        add_x: int, add_y: int,
-        ghost: Ghost | None = None,
+        add_x: float, add_y: float,
+        ghost: Any = None,
     ) -> bool:
+        """
+        Check if moving in a specific direction is possible without collision.
+
+        Args:
+            add_x
+                float: The x displacement to test.
+            add_y
+                float: The y displacement to test.
+            ghost
+                Any: The entity to test (defaults to player if None).
+
+        Returns:
+            bool: True if the movement is valid and collision-free.
+        """
         if ghost is None:
             ghost = self.player
 
@@ -777,6 +946,13 @@ class GameLogic(Interface):
         return not collision_x and not collision_y
 
     def death_event(self) -> None:
+        """
+        Handle the player death event, resetting ghost positions and
+        decrementing life.
+
+        Returns:
+            None: No return value.
+        """
         self.nb_wait += 1
         self.life -= 1
 
@@ -825,8 +1001,9 @@ class GameLogic(Interface):
         """Handle player input and ghost movement, then update score/life."""
         remove_collisions = self.pause_menu.cheats[REMOVE_COLLISIONS]
         freeze_ghosts = self.pause_menu.cheats[FREEZE_GHOSTS]
-        ak47_active: bool = self.pause_menu.cheats[AK47_ALWAYS_ACTIVE] or \
-            self.super_pacgum_state
+        ak47_active: bool = bool(
+            self.pause_menu.cheats[AK47_ALWAYS_ACTIVE]
+        ) or self.super_pacgum_state
 
         # usefull if the player is in a wall
         ghost_target_x = self.player.x
@@ -855,7 +1032,8 @@ class GameLogic(Interface):
                 can_move = self.get_game_time() - ghost.last_frozen > \
                     AK47_FREEZE_TIME
                 if can_move:
-                    if ghost.destination is not None:
+                    if (ghost.destination is not None and
+                            ghost.death_position is not None):
                         time_elapsed = self.get_game_time() - ghost.death_time
                         if time_elapsed >= GHOST_RETURN_SPAWN_TIME:
                             ghost.x = ghost.destination[0]
@@ -935,24 +1113,24 @@ class GameLogic(Interface):
             )
             self.last_bullet = self.get_game_time()
         if right:
-            self.player.try_direction = (SPEED, 0)
+            self.player.try_direction = (int(SPEED), 0)
             if remove_collisions or self.can_move_direction(SPEED, 0):
-                self.player.direction = (SPEED, 0)
+                self.player.direction = (int(SPEED), 0)
 
         if left:
-            self.player.try_direction = (-SPEED, 0)
+            self.player.try_direction = (-int(SPEED), 0)
             if remove_collisions or self.can_move_direction(-SPEED, 0):
-                self.player.direction = (-SPEED, 0)
+                self.player.direction = (-int(SPEED), 0)
 
         if up:
-            self.player.try_direction = (0, -SPEED)
+            self.player.try_direction = (0, -int(SPEED))
             if remove_collisions or self.can_move_direction(0, -SPEED):
-                self.player.direction = (0, -SPEED)
+                self.player.direction = (0, -int(SPEED))
 
         if down:
-            self.player.try_direction = (0, SPEED)
+            self.player.try_direction = (0, int(SPEED))
             if remove_collisions or self.can_move_direction(0, SPEED):
-                self.player.direction = (0, SPEED)
+                self.player.direction = (0, int(SPEED))
 
         add_x = self.player.direction[0]
         add_y = self.player.direction[1]
@@ -968,7 +1146,7 @@ class GameLogic(Interface):
         self.collision_events(
             self.player.x + add_x,
             self.player.y + add_y,
-            ignore_collisions=remove_collisions
+            ignore_collisions=bool(remove_collisions)
         )
 
         for point in self.points:
@@ -1094,13 +1272,32 @@ class GameLogic(Interface):
                     break
 
     def update_radius(self) -> float:
-        """update the radius of an entity so it is not too big"""
+        """
+        Calculate and return a dynamic radius for an entity based on
+        the maze scale.
+
+        Returns:
+            float: The calculated radius.
+        """
         return min(self.scale_x, self.scale_y) // 2.5
 
     def update_entity(self, entity: Player,
                       scale_ratio_x: float,
-                      scale_ratio_y: float):
-        """update the position and radius of an entity"""
+                      scale_ratio_y: float) -> None:
+        """
+        Update the position and size of an entity when the screen scales.
+
+        Args:
+            entity
+                Player: The entity to update.
+            scale_ratio_x
+                float: The horizontal scaling ratio.
+            scale_ratio_y
+                float: The vertical scaling ratio.
+
+        Returns:
+            None: No return value.
+        """
         entity.x *= scale_ratio_x
         entity.y *= scale_ratio_y
         entity.radius = self.update_radius()
@@ -1110,22 +1307,40 @@ class GameLogic(Interface):
         entity.update_collision_box()
 
     def draw_points(self) -> None:
+        """
+        Draw the regular pacgum points on the screen.
+
+        Returns:
+            None: No return value.
+        """
         for point in self.points:
             pr.draw_circle(
-                point.center_x + CENTER_X,
-                point.center_y + CENTER_Y,
-                point.radius, pr.WHITE
+                int(point.center_x + CENTER_X),
+                int(point.center_y + CENTER_Y),
+                int(point.radius), pr.WHITE
             )
 
     def draw_super_pacgums(self) -> None:
+        """
+        Draw the super pacgums on the screen.
+
+        Returns:
+            None: No return value.
+        """
         for point in self.super_pacgums:
             pr.draw_circle(
-                point.center_x + CENTER_X,
-                point.center_y + CENTER_Y,
+                int(point.center_x + CENTER_X),
+                int(point.center_y + CENTER_Y),
                 int(self.scale_x * 0.4), pr.YELLOW
             )
 
-    def draw_player(self):
+    def draw_player(self) -> None:
+        """
+        Draw the animated player character sprite.
+
+        Returns:
+            None: No return value.
+        """
         # draw hitbox for debugging
         dire = "right"
         cur_dir = self.player.direction
@@ -1173,7 +1388,14 @@ class GameLogic(Interface):
                        int(self.player.radius),
                        pr.YELLOW) """
 
-    def draw_lighting(self):
+    def draw_lighting(self) -> None:
+        """
+        Render dynamic lighting effects using shaders when the player
+        has a super pacgum.
+
+        Returns:
+            None: No return value.
+        """
         pr.begin_blend_mode(pr.BlendMode.BLEND_ADDITIVE)
         pr.begin_shader_mode(self.shader)
 
@@ -1215,9 +1437,9 @@ class GameLogic(Interface):
 
         if time_left < LIGHT_FADE_TIME:
             fade = max(0.0, time_left / LIGHT_FADE_TIME)
-            pac_color_r *= fade
-            pac_color_g *= fade
-            pac_color_b *= fade
+            pac_color_r = int(pac_color_r * fade)
+            pac_color_g = int(pac_color_g * fade)
+            pac_color_b = int(pac_color_b * fade)
 
         col_val = pr.ffi.new("float[]", [pac_color_r / 255.0,
                                          pac_color_g / 255.0,
@@ -1237,12 +1459,24 @@ class GameLogic(Interface):
         pr.end_shader_mode()
         pr.end_blend_mode()
 
-    def draw_floor(self):
+    def draw_floor(self) -> None:
+        """
+        Draw the base floor background for the maze area.
+
+        Returns:
+            None: No return value.
+        """
         maze_w = int(self.maze_width * self.scale_x)
         maze_h = int(self.maze_height * self.scale_y)
         pr.draw_rectangle(CENTER_X, CENTER_Y, maze_w, maze_h, pr.BLACK)
 
     def draw_ghosts(self) -> None:
+        """
+        Draw the ghost sprites, applying the fleeing texture if necessary.
+
+        Returns:
+            None: No return value.
+        """
         for ghost in self.ghosts:
 
             if self.super_pacgum_state:
@@ -1296,6 +1530,12 @@ class GameLogic(Interface):
             ) """
 
     def get_angle_deg(self) -> float:
+        """
+        Calculate the angle in degrees from the player to the mouse position.
+
+        Returns:
+            float: The calculated angle in degrees.
+        """
         mouse_pos = pr.get_mouse_position()
         player_pos = pr.Vector2(self.player.x + CENTER_X,
                                 self.player.y + CENTER_Y)
@@ -1308,7 +1548,17 @@ class GameLogic(Interface):
         return angle_deg
 
     def draw_ak47(self, angle_deg: float) -> None:
-        """draw the ak47 sprite at the pacman position"""
+        """
+        Draw the AK-47 sprite at the player's position, oriented
+        towards the mouse.
+
+        Args:
+            angle_deg
+                float: The rotation angle for the weapon.
+
+        Returns:
+            None: No return value.
+        """
         scale = self.player.radius / (PACMAN_SPRITE_QUALITY / 2)
         source_height = AK47_SPRITE_QUALITY
         if 90 < angle_deg < 270:
@@ -1331,10 +1581,22 @@ class GameLogic(Interface):
         )
 
     def get_cell_pixel_size(self) -> tuple[int, int]:
+        """
+        Get the size of a single maze cell in pixels.
+
+        Returns:
+            tuple[int, int]: The width and height of a cell.
+        """
         return int(self.scale_x), int(self.scale_y)
 
     def update(self) -> str:
-        """update the game logic, this is called every frame"""
+        """
+        Update the core game logic, handle inputs, and render all
+        game elements for a single frame.
+
+        Returns:
+            str: The name of the next state for the game manager.
+        """
         super().update()
 
         if self.update_game_duration:
@@ -1437,7 +1699,8 @@ class GameLogic(Interface):
                 pr.WHITE
             )
 
-        skip_level: bool = self.pause_menu.cheats[LEVEL_SKIP] and not self.paused
+        skip_level: bool = bool(self.pause_menu.cheats[LEVEL_SKIP]) and \
+            not self.paused
 
         if len(self.points) + len(self.super_pacgums) == 0 or skip_level:
             self.current_level += 1

@@ -13,7 +13,9 @@ from .Constants import (
 
 
 class GameManager:
-    """class that manages the game"""
+    """
+    Class that manages the overall game loop, state, and window.
+    """
 
     def __init__(
         self, maze: MazeGenerator,
@@ -21,6 +23,19 @@ class GameManager:
         config: dict[str, Any],
         config_file: str
     ) -> None:
+        """
+        Initialize the GameManager.
+
+        Args:
+            maze
+                MazeGenerator: The initial maze generator.
+            parser
+                Parser: The configuration parser instance.
+            config
+                dict[str, Any]: The parsed configuration dictionary.
+            config_file
+                str: The path to the configuration file.
+        """
 
         self.maze: MazeGenerator = maze
         self.parser: Parser = parser
@@ -32,31 +47,58 @@ class GameManager:
         self.grid: list[list[int]] = self.maze.maze
         self.maze_height: int = len(self.grid)
         self.maze_width: int = len(self.grid[0])
-        self.interfaces: dict[str, Interface] = {}
+        self.interfaces: dict[str, Any] = {}
         self.speed = 2.0
         self.state = ""
         self.assets: dict = {}
         self.config: dict[str, Any] = config
 
     def add_interface(self, name: str, interface: Interface) -> None:
-        """This function adds an interface to the manager"""
+        """
+        Add an interface to the manager.
+
+        Args:
+            name
+                str: The name/state identifier for the interface.
+            interface
+                Interface: The interface instance to add.
+
+        Returns:
+            None: No return value.
+        """
         self.interfaces[name] = interface
 
     def set_state(self, state: str) -> None:
-        """This function sets the state of the game"""
+        """
+        Set the current state of the game.
+
+        Args:
+            state
+                str: The state identifier to switch to.
+
+        Returns:
+            None: No return value.
+        """
         if state not in self.interfaces:
             raise ValueError("State not found")
 
         self.state = state
 
     def start_game(self) -> None:
-        """function for the logic of this interface"""
+        """
+        Start the main game loop, handling state transitions and
+        updating the active interface.
+
+        Returns:
+            None: No return value.
+        """
 
         while not pr.window_should_close():
             pr.begin_drawing()
             pr.clear_background(pr.BLACK)
             cur_interface = self.interfaces[self.state]
             interface_result = cur_interface.update()
+            game_won = interface_result == GAME_WON
             if interface_result == EXIT:
                 break
 
@@ -65,8 +107,8 @@ class GameManager:
                 selected_level = self.interfaces[
                     LEVEL_SELECTION].selected_level
                 if selected_level:
-                    self.interfaces[GAME_LOGIC].current_level = self.config["levels"].index(
-                        selected_level)
+                    self.interfaces[GAME_LOGIC].current_level = self.config[
+                                                "levels"].index(selected_level)
                     seed = self.config["seed"]
 
                     new_maze = MazeGenerator(
@@ -94,7 +136,7 @@ class GameManager:
                 self.interfaces["GameFinish"].score = (
                     self.interfaces[self.state].score
                 )
-                self.interfaces["GameFinish"].won = interface_result == GAME_WON
+                self.interfaces["GameFinish"].won = game_won
                 self.interfaces["GameFinish"].reset(
                     self.parser.get_config(),
                     self.parser.get_scores()
@@ -124,9 +166,21 @@ class GameManager:
             pr.end_drawing()
 
     def create_window(self, width: int, height: int) -> tuple[int, int]:
+        """
+        Create and initialize the game window using raylib.
+
+        Args:
+            width
+                int: The requested window width.
+            height
+                int: The requested window height.
+
+        Returns:
+            tuple[int, int]: The actual window width and height created.
+        """
         min_width: int = 1200
         min_height: int = 1000
-        pr.set_trace_log_level(pr.LOG_ERROR)
+        pr.set_trace_log_level(pr.TraceLogLevel.LOG_ERROR)
         pr.set_window_min_size(min_width, min_height)
 
         if width < min_width:
@@ -152,10 +206,27 @@ class GameManager:
         return self.window_width, self.window_height
 
     def set_window_size(self, width: int, height: int) -> None:
+        """
+        Set the size of the game window.
+
+        Args:
+            width
+                int: The new window width.
+            height
+                int: The new window height.
+
+        Returns:
+            None: No return value.
+        """
         pr.set_window_size(width, height)
 
-    def load_assets(self):
-        """function made to load assets"""
+    def load_assets(self) -> None:
+        """
+        Load game assets such as textures and images from the filesystem.
+
+        Returns:
+            None: No return value.
+        """
         paths = {
             "pacman": "assets/pacman",
             "ghosts": "assets/ghosts/",
@@ -219,11 +290,22 @@ class GameManager:
         self.assets["skull"] = pr.load_texture_from_image(skull)
         self.assets["gold_coin"] = pr.load_texture_from_image(gold_coin)
 
-    def close_window(self):
+    def close_window(self) -> None:
+        """
+        Close the game window.
+
+        Returns:
+            None: No return value.
+        """
         pr.close_window()
 
-    def free_assets(self):
-        """function made to free assets"""
+    def free_assets(self) -> None:
+        """
+        Free all loaded assets and textures from GPU memory.
+
+        Returns:
+            None: No return value.
+        """
         for texture in self.assets["pacman"]:
             pr.unload_texture(texture)
 

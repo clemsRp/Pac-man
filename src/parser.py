@@ -1,22 +1,26 @@
-
 import json
 
 
 class Parser:
 
     def __init__(self) -> None:
-        self._config = dict()
-        self._scores = dict()
+        """
+        Initialize the Parser with empty configuration and scores.
+        """
+        self._config: dict = dict()
+        self._scores: dict = dict()
 
     def parse_config(self, filename: str) -> None:
-        '''
-        Parse a given file to get the config
+        """
+        Parse a given file to get the configuration.
 
         Args:
-            filename: str = The file to parse for the config
-        Return:
-            None
-        '''
+            filename
+                str: The path to the configuration file to parse.
+
+        Returns:
+            None: No return value.
+        """
         with open(filename, 'r') as f:
             final_lines: list[str] = []
             lines: list[str] = f.readlines()
@@ -40,15 +44,17 @@ class Parser:
 
             self._config = res
 
-    def parse_scores(self, filename) -> None:
-        '''
-        Parse a given file to get the scores
+    def parse_scores(self, filename: str) -> None:
+        """
+        Parse a given file to get the scores.
 
         Args:
-            filename: str = The file to parse for the scores
-        Return:
-            None
-        '''
+            filename
+                str: The path to the scores file to parse.
+
+        Returns:
+            None: No return value.
+        """
         with open(filename, 'r') as f:
             final_lines: list[str] = []
             lines: list[str] = f.readlines()
@@ -73,24 +79,40 @@ class Parser:
             self._scores = res
 
     def get_config(self) -> dict:
+        """
+        Retrieve the parsed configuration dictionary.
+
+        Returns:
+            dict: The configuration dictionary.
+        """
         return self._config
 
     def get_scores(self) -> dict:
+        """
+        Retrieve the parsed scores dictionary.
+
+        Returns:
+            dict: The scores dictionary.
+        """
         return self._scores
 
     def _is_valid_config(
         self,
         config: dict, filename: str
     ) -> dict:
-        '''
-        Check if the config is valid or not
+        """
+        Check if the parsed configuration is valid.
 
         Args:
-            config: dict = The config
-            filename: str = The filename
-        Return:
-            None
-        '''
+            config
+                dict: The configuration dictionary to validate.
+            filename
+                str: The name of the file being validated (for error messages).
+
+        Returns:
+            dict: A dictionary containing the validation state (bool)
+                and a message (str).
+        """
         errors: list[str] = []
 
         mandatory_keys: list[str] = [
@@ -199,15 +221,19 @@ Too many keys"
         self,
         scores: dict, filename: str
     ) -> dict:
-        '''
-        Check if the scores is valid or not
+        """
+        Check if the parsed scores are valid.
 
         Args:
-            scores: dict = The scores
-            filename: str = The filename
-        Return:
-            None
-        '''
+            scores
+                dict: The scores dictionary to validate.
+            filename
+                str: The name of the file being validated (for error messages).
+
+        Returns:
+            dict: A dictionary containing the validation state (bool)
+                and a message (str).
+        """
         errors: list[str] = []
 
         mandatory_keys: list[str] = [
