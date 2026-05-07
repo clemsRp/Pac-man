@@ -2,7 +2,6 @@ import pyray as pr
 import time
 import numpy as np
 from math import atan2
-from typing import Any
 from mazegenerator.mazegenerator import MazeGenerator
 from .Physics import CollisionBox, CircleBox, RectangleBox, Bullet
 from .PauseMenu import PauseMenu
@@ -1068,7 +1067,8 @@ class GameLogic(Interface):
                 # player
                 if ghost.hitbox.collides_with(self.player.hitbox):
                     if self.super_pacgum_state:
-                        if freeze_ghosts:  # teleport the ghost home since it is frozen
+                        if freeze_ghosts:  # teleport the ghost home
+                            # since it is frozen
                             self.score += self.config["points_per_ghost"]
                             ghost.x = ghost.initial_x
                             ghost.y = ghost.initial_y

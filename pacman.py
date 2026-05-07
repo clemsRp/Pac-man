@@ -36,18 +36,18 @@ def main() -> None:
     # window_width = 1920
     # window_height = 1080 - 55
     game_manager.set_window_size(window_width,
-                                    window_height)
+                                 window_height)
     pr.set_window_position(0, 0)
     main_menu = MainMenu(window_width,
-                            window_height,
-                            parser)
+                         window_height,
+                         parser)
     main_menu.set_assets(game_manager.assets)
 
     instructions_menu = InstructionsMenu(window_width, window_height)
     instructions_menu.set_assets(game_manager.assets)
     level_selection = LevelSelectionMenu(window_width,
-                                            window_height,
-                                            parser)
+                                         window_height,
+                                         parser)
     level_selection.set_assets(game_manager.assets)
     game_logic = GameLogic(
         maze_gen, parser,
@@ -58,21 +58,22 @@ def main() -> None:
         parser.get_config(), parser.get_scores()
     )
     game_manager.add_interface("gamelogic",
-                                game_logic)
+                               game_logic)
     game_manager.add_interface("mainmenu",
-                                main_menu)
+                               main_menu)
     game_manager.add_interface("instructions_menu",
-                                instructions_menu)
+                               instructions_menu)
     game_manager.add_interface("levelselection",
-                                level_selection)
+                               level_selection)
     game_manager.add_interface("GameFinish",
-                                game_finish)
+                               game_finish)
     game_manager.set_state("mainmenu")
     game_logic.set_assets(game_manager.assets)
     game_finish.set_assets(game_manager.assets)
     game_manager.start_game()
     game_manager.free_assets()
     game_manager.close_window()
+
 
 if __name__ == "__main__":
     import traceback
