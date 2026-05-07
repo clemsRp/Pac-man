@@ -29,7 +29,8 @@ class MainMenu(Interface):
         center_x = (self.window_width - button_width) // 2
         center_y = (self.window_height - button_height) // 2
         start_button = Button(center_x,
-                              int(center_y - button_height - self.window_height * 0.02),
+                              int(center_y - button_height -
+                                  self.window_height * 0.02),
                               button_width, button_height,
                               "Start Game",
                               pr.GREEN,
@@ -43,7 +44,8 @@ class MainMenu(Interface):
                                      self.instructions_menu)
 
         exit_button = Button(center_x,
-                             int(center_y + button_height + self.window_height * 0.02),
+                             int(center_y + button_height +
+                                 self.window_height * 0.02),
                              button_width, button_height,
                              "Exit",
                              pr.RED,
@@ -68,23 +70,33 @@ class MainMenu(Interface):
                              reverse=True)
 
         # Compute the total score for each player
-        player_totals: dict[str, int] = {}
+        players = []
         for p in self.scores:
-            player_totals[p["pseudo"]] = player_totals.get(
-                p["pseudo"], 0) + p["score"]
+            players.append((p["pseudo"], p["score"]))
+
+        best_players = sorted(
+            players,
+            reverse=True,
+            key=lambda x: x[1])[
+            :MAX_SCORES_SHOWN]
+
+        player_totals: dict[str, int] = {}
+        for p in best_players:
+            player_totals[p[0]] = player_totals.get(
+                p[0], 0) + p[1]
 
         self.best_player_name = "None"
         if len(player_totals) > 0:
-            self.best_player_name = max(player_totals.keys(),
-                                        key=lambda x: player_totals[x])
+            res = max(player_totals, key=lambda x: player_totals[x])
 
-        if self.best_player_name != "None":
-            self.best_player_score = player_totals[self.best_player_name]
-        else:
-            self.best_player_score = 0
+            self.best_player_name = res
+            self.best_player_score = player_totals[res]
 
     def reset_pacman(self):
-        """resets the pacman in the background of the main menu so it restarts"""
+        """
+        resets the pacman in the background
+        of the main menu so it restarts
+        """
         self.background_pacman.x = -self.background_pacman.radius
         self.background_pacman.y = self.background_pacman.radius
         self.direction = "right"

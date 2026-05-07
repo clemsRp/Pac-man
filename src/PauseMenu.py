@@ -9,6 +9,7 @@ from .Constants import (PAUSE_MENU,
                         AK47_ALWAYS_ACTIVE,
                         NB_BOUNCES)
 import pyray as pr
+import time
 
 
 class PauseMenu(Interface):
@@ -60,6 +61,8 @@ class PauseMenu(Interface):
                                               BONUS_LIVES: 0,
                                               NB_BOUNCES: 3}
         self.add_button(resume_button)
+
+        self.start_time: float = time.time()
 
         checkbox_texts = [
             INVINCIBILITY,
@@ -151,7 +154,10 @@ class PauseMenu(Interface):
     def get_next_score(self):
         scores = self.scores["players"]
         # print(scores)
-        scores = [s for s in sorted(scores, key=lambda x: x["score"]) if s["score"] >= self.current_score]
+        scores = [
+            s for s in sorted(
+                scores,
+                key=lambda x: x["score"]) if s["score"] >= self.current_score]
         if not scores:
             return self.current_score, "You"
         next_score = scores[0]["score"]
@@ -164,7 +170,7 @@ class PauseMenu(Interface):
         # print(self.scores)
         score_pos_x = self.menu_x + int(0.1 * self.menu_width)
         score_pos_y = self.menu_y + int(0.1 * self.menu_height)
-        
+
         score_text = "Score: "
         label_width = pr.measure_text(score_text, self.cheats_font_size)
         pr.draw_text(
@@ -181,11 +187,11 @@ class PauseMenu(Interface):
             self.cheats_font_size,
             pr.YELLOW
         )
-        
+
         next_score_x = score_pos_x
         next_score_y = score_pos_y + int(0.05 * self.menu_height)
         next_score, next_score_name = self.get_next_score()
-        
+
         next_label = "next person to beat: "
         next_label_width = pr.measure_text(next_label, self.cheats_font_size)
         pr.draw_text(
@@ -254,10 +260,24 @@ class PauseMenu(Interface):
             elif isinstance(gui_element, Spinner):
                 self.cheats[cheat_name] = gui_element.value
 
+    def draw_ghost(self) -> None:
+        ghost_x = self.menu_x + int(self.menu_width * 0.1)
+        ghost_y = self.menu_y + int(self.menu_height * 0.3)
+        index: int = int(((time.time() - self.start_time) * 6) % 3)
+        scale = 4.5
+        pr.draw_texture_ex(
+            self.assets["pause_menu"][int(index)],
+            pr.Vector2(ghost_x, ghost_y),
+            0.0,
+            scale,
+            pr.WHITE
+        )
+
     def update(self) -> str:
         self.draw_background_color()
         self.draw_pause_menu()
         self.draw_score()
+        self.draw_ghost()
         super().update()
         self.update_cheats()
         result = self.next_state

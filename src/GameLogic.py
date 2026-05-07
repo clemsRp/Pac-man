@@ -96,6 +96,7 @@ class GameLogic(Interface):
             self.scores,
             self.screen_width,
             self.screen_height)
+
         self.paused = False
         self.total_paused_time = 0.0
         self.pause_started_at: float | None = None
@@ -342,6 +343,7 @@ class GameLogic(Interface):
                 int(0.9 * self.scale_x)
             )
         ]
+        self.pause_menu.set_assets(self.assets)
 
     def create_collision_boxs(
         self,
@@ -1388,18 +1390,29 @@ class GameLogic(Interface):
             "Size": str(size),
             "Score": str(self.score),
             "Time": f"{abs(self.game_duration):.1f}",
-            "Max level time": str(self.config["level_max_time"])
+            "Max time": str(self.config["level_max_time"])
         }
 
         index: int = 0
-        offset: int = 20
+        offset: int = 45
+        add_x: int = 15
+        max_length: int = max([pr.measure_text(k, offset)
+                              for k in datas.keys()])
         for (key, val) in datas.items():
+            key_length = pr.measure_text(key, offset)
             pr.draw_text(
-                f"{key}: {val}",
-                15,
-                15 + index * offset + int(texture.height * scale),
-                20, pr.WHITE
+                f"{key}:",
+                add_x + max_length - key_length,
+                add_x + index * offset + int(texture.height * scale),
+                offset, pr.WHITE
             )
+            pr.draw_text(
+                f"{val}",
+                add_x + max_length + 40,
+                add_x + index * offset + int(texture.height * scale),
+                offset, pr.Color(255, 214, 15, 255)
+            )
+
             index += 1
 
         bonus_lives = self.pause_menu.cheats[BONUS_LIVES]
@@ -1411,10 +1424,10 @@ class GameLogic(Interface):
                 texture,
                 pr.Rectangle(0, 0, texture.width, texture.height),
                 pr.Rectangle(
-                    (k + 1) * (texture.width * 1.2) * scale * 0.5,
+                    (k + 1) * (texture.width * 1.2) * scale * 0.7,
                     15 + (texture.height * scale) / 2,
-                    texture.width * scale * 0.5,
-                    texture.height * scale * 0.5
+                    texture.width * scale * 0.7,
+                    texture.height * scale * 0.7
                 ),
                 pr.Vector2(
                     (texture.width * scale) / 2.0,
@@ -1440,7 +1453,7 @@ class GameLogic(Interface):
             saved_life = self.life
             self.reset(MazeGenerator(size, seed=int(time.time())))
 
-            #ensures that between levels the score and 
+            # ensures that between levels the score and
             # life are not reset
             self.score = saved_score
             self.life = saved_life

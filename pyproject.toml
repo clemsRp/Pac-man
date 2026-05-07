@@ -9,6 +9,7 @@ dependencies = [
     "mazegenerator",
     "mypy>=2.0.0",
     "numpy>=2.4.4",
+    "pillow>=12.2.0",
     "raylib>=5.5.0.4",
 ]
 

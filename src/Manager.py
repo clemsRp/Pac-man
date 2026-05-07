@@ -158,16 +158,23 @@ class GameManager:
         """function made to load assets"""
         paths = {
             "pacman": "assets/pacman",
-            "ghosts": "assets/ghosts/"
+            "ghosts": "assets/ghosts/",
+            "pause_menu": "assets/pause_menu/ghost"
         }
         self.assets = {
             "pacman": [],
             "ghosts": {},
+            "pause_menu": []
         }
 
-        contenu = os.listdir(paths["pacman"])
+        for k in range(1, 4):
+            self.assets["pause_menu"].append(
+                pr.load_texture(f"{paths["pause_menu"]}{k}.png")
+            )
+
+        content = os.listdir(paths["pacman"])
         files = [
-            f for f in contenu if os.path.isfile(
+            f for f in content if os.path.isfile(
                 os.path.join(paths["pacman"], f)
             )
         ]
@@ -187,8 +194,8 @@ class GameManager:
                 pr.load_texture_from_image(image)
             )
 
-        contenu = os.listdir(paths["ghosts"])
-        files = [f for f in contenu if os.path.isfile(
+        content = os.listdir(paths["ghosts"])
+        files = [f for f in content if os.path.isfile(
             os.path.join(paths["ghosts"], f)
         )]
 
@@ -205,7 +212,12 @@ class GameManager:
         pr.image_resize(skull,
                         300,
                         300)
+        gold_coin = pr.load_image("assets/other/gold_coin.png")
+        pr.image_resize(gold_coin,
+                        300,
+                        300)
         self.assets["skull"] = pr.load_texture_from_image(skull)
+        self.assets["gold_coin"] = pr.load_texture_from_image(gold_coin)
 
     def close_window(self):
         pr.close_window()

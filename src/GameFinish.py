@@ -131,11 +131,12 @@ class GameFinish(Interface):
             self.save_data()
 
     def draw_game_win(self, font_size: int) -> None:
+        title = "GAME W  N"
         center_title = pr.measure_text(
-            "GAME WON", font_size
+            title, font_size
         )
         pr.draw_text(
-            "GAME WON",
+            title,
             int(
                 self.screen_width / 2 -
                 center_title / 2
@@ -144,7 +145,28 @@ class GameFinish(Interface):
                 self.screen_height / 3 -
                 font_size / 2
             ),
-            font_size, pr.GREEN
+            font_size, pr.Color(255, 214, 15, 255)
+        )
+        scale = 1.3
+        texture = self.assets["gold_coin"]
+        pr.draw_texture_ex(
+            texture,
+            pr.Vector2(
+                int(
+                    self.screen_width / 2 -
+                    center_title / 2 +
+                    pr.measure_text(
+                        "GAME W", int(font_size * 0.92)
+                    ) + texture.width * 0.5
+                ) - 8,
+                int(
+                    self.screen_height / 3 -
+                    font_size / 2
+                ),
+            ),
+            0.0,
+            scale,
+            pr.WHITE
         )
         return
 
