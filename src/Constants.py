@@ -1,3 +1,5 @@
+DEBUG = False
+
 NORTH = 0b0001
 EAST = 0b0010
 SOUTH = 0b0100
@@ -9,6 +11,7 @@ BULLET_FIRE_RATE = 10
 BULLET_RADIUS = 8.0
 AK47_FREEZE_TIME = 5.0
 
+
 GHOST_RETURN_SPAWN_TIME = 7.0
 
 GAME_LOGIC = "gamelogic"
@@ -18,6 +21,7 @@ MAIN_MENU = "mainmenu"
 LEVEL_SELECTION = "levelselection"
 EXIT = "exit"
 PAUSE_MENU = "pausemenu"
+INSTRUCTIONS_MENU = "instructions_menu"
 
 INVINCIBILITY = "invincibility"
 REMOVE_COLLISIONS = "remove_collisions"

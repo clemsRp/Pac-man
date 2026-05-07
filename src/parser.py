@@ -31,7 +31,7 @@ class Parser:
             try:
                 res = json.loads("\n".join(final_lines))[0]
             except Exception:
-                raise Exception("Invalid json")
+                raise Exception("Invalid config file")
 
             is_valid: dict = self._is_valid_config(res, filename)
             if not is_valid["state"]:
@@ -63,7 +63,7 @@ class Parser:
             try:
                 res = json.loads("\n".join(final_lines))[0]
             except Exception:
-                raise Exception("Invalid json")
+                raise Exception("Invalid score file")
 
             is_valid: dict = self._are_valid_scores(res, filename)
             if not is_valid["state"]:

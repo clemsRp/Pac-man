@@ -108,6 +108,14 @@
 	        {
 	            "pseudo": "opernodjs1",
 	            "score": 100
+	        },
+	        {
+	            "pseudo": "ddd e222",
+	            "score": 0
+	        },
+	        {
+	            "pseudo": "ft printf",
+	            "score": 1210
 	        }
 	    ]
 	}

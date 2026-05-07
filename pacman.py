@@ -6,8 +6,10 @@ from mazegenerator.mazegenerator import MazeGenerator
 from src.GameLogic import GameLogic
 from src.GameFinish import GameFinish
 from src.MainMenu import MainMenu
+from src.InstructionsMenu import InstructionsMenu
 from src.LevelSelectionMenu import LevelSelectionMenu
 import pyray as pr
+from src.Constants import DEBUG
 
 
 def main() -> None:
@@ -18,6 +20,8 @@ def main() -> None:
     parser.parse_config(CONFIG_FILE)
     seed = parser.get_config()["seed"]
     maze_gen = MazeGenerator((16, 16), seed=seed)
+    # if not maze_gen.maze:
+
     window_width = 1000
     window_height = 800
     game_manager = GameManager(
@@ -38,6 +42,9 @@ def main() -> None:
                             window_height,
                             parser)
     main_menu.set_assets(game_manager.assets)
+
+    instructions_menu = InstructionsMenu(window_width, window_height)
+    instructions_menu.set_assets(game_manager.assets)
     level_selection = LevelSelectionMenu(window_width,
                                             window_height,
                                             parser)
@@ -54,6 +61,8 @@ def main() -> None:
                                 game_logic)
     game_manager.add_interface("mainmenu",
                                 main_menu)
+    game_manager.add_interface("instructions_menu",
+                                instructions_menu)
     game_manager.add_interface("levelselection",
                                 level_selection)
     game_manager.add_interface("GameFinish",
@@ -70,4 +79,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        traceback.print_exc()
+        if DEBUG:
+            traceback.print_exc()
+        else:
+            print(f"\033[31m{e}\033[0m")

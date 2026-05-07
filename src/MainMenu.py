@@ -1,5 +1,5 @@
 from .Interfaces import Interface, Button
-from .Constants import MAIN_MENU, GAME_LOGIC, LEVEL_SELECTION
+from .Constants import MAIN_MENU, GAME_LOGIC, LEVEL_SELECTION, INSTRUCTIONS_MENU
 from .Constants import EXIT, MAX_SCORES_SHOWN
 from .Constants import PACMAN_SPRITE_QUALITY
 from .Physics import CollisionBox, CircleBox
@@ -29,14 +29,21 @@ class MainMenu(Interface):
         center_x = (self.window_width - button_width) // 2
         center_y = (self.window_height - button_height) // 2
         start_button = Button(center_x,
-                              int(center_y - button_height / 2),
+                              int(center_y - button_height - self.window_height * 0.02),
                               button_width, button_height,
                               "Start Game",
                               pr.GREEN,
                               self.start_game)
 
+        instructions_button = Button(center_x,
+                                     center_y,
+                                     button_width, button_height,
+                                     "Instructions",
+                                     pr.GOLD,
+                                     self.instructions_menu)
+
         exit_button = Button(center_x,
-                             int(center_y + button_height / 2 + self.window_height * 0.02),
+                             int(center_y + button_height + self.window_height * 0.02),
                              button_width, button_height,
                              "Exit",
                              pr.RED,
@@ -50,6 +57,7 @@ class MainMenu(Interface):
 
         self.next_state = MAIN_MENU
         self.add_button(start_button)
+        self.add_button(instructions_button)
         self.add_button(exit_button)
 
     def compute_scores(self) -> None:
@@ -217,6 +225,10 @@ class MainMenu(Interface):
     def start_game(self):
         """starts the game, goes to the level selection menu"""
         self.next_state = LEVEL_SELECTION
+
+    def instructions_menu(self):
+        """goes to the instructions menu"""
+        self.next_state = INSTRUCTIONS_MENU
 
     def update(self) -> str:
         self.update_background_pacman()

@@ -1436,7 +1436,14 @@ class GameLogic(Interface):
                 self.config["levels"][self.current_level]["height"]
             )
 
+            saved_score = self.score
+            saved_life = self.life
             self.reset(MazeGenerator(size, seed=int(time.time())))
+
+            #ensures that between levels the score and 
+            # life are not reset
+            self.score = saved_score
+            self.life = saved_life
 
         if self.life + bonus_lives < 0:
             if not self.paused:

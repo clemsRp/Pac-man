@@ -161,25 +161,46 @@ class PauseMenu(Interface):
 
     def draw_score(self):
         score = self.current_score
-        print(self.scores)
+        # print(self.scores)
         score_pos_x = self.menu_x + int(0.1 * self.menu_width)
         score_pos_y = self.menu_y + int(0.1 * self.menu_height)
+        
+        score_text = "Score: "
+        label_width = pr.measure_text(score_text, self.cheats_font_size)
         pr.draw_text(
-            f"Score: {score}",
+            score_text,
             score_pos_x,
             score_pos_y,
             self.cheats_font_size,
             pr.WHITE
         )
+        pr.draw_text(
+            f"{score}",
+            score_pos_x + label_width,
+            score_pos_y,
+            self.cheats_font_size,
+            pr.YELLOW
+        )
+        
         next_score_x = score_pos_x
         next_score_y = score_pos_y + int(0.05 * self.menu_height)
         next_score, next_score_name = self.get_next_score()
+        
+        next_label = "next person to beat: "
+        next_label_width = pr.measure_text(next_label, self.cheats_font_size)
         pr.draw_text(
-            f"next person to beat: {next_score_name} ({next_score})",
+            next_label,
             next_score_x,
             next_score_y,
             self.cheats_font_size,
             pr.WHITE
+        )
+        pr.draw_text(
+            f"{next_score_name} ({next_score})",
+            next_score_x + next_label_width,
+            next_score_y,
+            self.cheats_font_size,
+            pr.SKYBLUE
         )
 
     def add_checkbox(self, checkbox: Checkbox,
