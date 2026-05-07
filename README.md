@@ -18,12 +18,11 @@ This project is a modern recreation of the classic arcade game **Pacman**, devel
 ## Instruction
 
 ### Prerequisites
-- Python 3.8+
-- Raylib dependencies
+- Python 3.10
 - `uv` (Python package manager)
 
 ## Configuration
-The game's behavior and progression are entirely driven by a `config.json` file located in the root directory. This allows for fine-tuning the gameplay balance without recompiling the source code.
+The game's behavior and progression are entirely driven by a `config.json` file located in the root directory. This allows us to update the config or the scores at anytime while the program is running.
 
 ### Configuration Structure
 The configuration is structured as a JSON object containing the following key parameters:
@@ -77,7 +76,7 @@ The software follows a modular Object-Oriented Programming (OOP) approach to ens
 
 **Core Modules:**
 - **Manager (`Manager.py`)**: The central hub. It initializes the window, loads assets, and switches between different `Interfaces`.
-- **Interfaces (`Interfaces.py`, `MainMenu.py`, etc.)**: An abstract base class system where every menu or game screen must implement `update()` and `draw()` methods.
+- **Interfaces (`Interfaces.py`, `MainMenu.py`, etc.)**: An abstract base class system where every menu or game screen must implement `update()` method.
 - **Game Logic (`GameLogic.py`)**: The engine of the game. It handles the interaction between entities, score updates, and win/loss conditions.
 - **Entities (`Player.py`, `Ghost.py`)**: Independent classes that manage their own state (position, velocity, AI behavior).
 - **Physics (`Physics.py`)**: A utility module providing collision primitives and mathematical helpers for movement.
@@ -108,11 +107,13 @@ This project uses various external assets to enhance the visual and auditory exp
 - **Pacman & Ghosts**: Custom sprites based on the original Namco designs, resized and optimized for Raylib.
 - **Weapon (AK-47)**: Sprite sourced from open-source game asset platforms (e.g., [OpenGameArt](https://opengameart.org/)).
 - **UI Icons**: 
-    - `skull.png`: Used for **game over** and hazard indicators.
-    - `gold_coin.png`: Used for **game won** and currency display.
+    - `skull.png`: Used for **game over**.
+    - `gold_coin.png`: Used for **game won**.
 - **Backgrounds & Textures**: Procedural textures generated or loaded via the `assets/` directory.
 
 ### Libraries & Packages
 - **[Raylib (pyray)](https://pypi.org/project/pyray/)**: Core library used for window management, 2D rendering, and input handling.
+- **Numpy** was use for high performant ray tracing.
+- **flake8/mypy** are mandatory for the `make lint` command.
 
 >AI was use to understand how used librairies works using short tutos or examples, and also to chose disegn ideas.
