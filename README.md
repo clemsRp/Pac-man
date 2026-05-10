@@ -99,6 +99,7 @@ The `GameManager` holds instances of `Interface`. When the state is set to `GAME
 ## Project Management
 The development of this project followed an iterative and structured approach to ensure all mandatory features were met within the deadline.
 
+
 ### Development Process
 Our team divided the development into several key milestones:
 1. **Foundation**: Setting up the `GameManager` and the basic window rendering with Raylib.
@@ -107,10 +108,14 @@ Our team divided the development into several key milestones:
 4. **AI & Combat**: Developing the Ghost pathfinding (A*) and the AK-47 projectile logic.
 5. **UI & Polish**: Finalizing the menu system (Main, Level Selection, Pause) and the Highscore persistent storage.
 
+
 ### Tools and Methodology
 - **Version Control**: Git was used for every step, with clear commit messages to track the evolution of the software.
-- **Task Tracking**: We maintained a clear list of objectives (TODOs) to manage priorities between the logic engine and the graphical interface.
+- **Task Tracking**: We maintained a clear list of objectives (project organization) to manage priorities between the logic engine and the graphical interface.
 - **Documentation**: Constant updates to the code comments and this README to ensure the project remains maintainable.
+
+
+[about project management](project_management/README.md)
 
 ## Resources
 This project uses various external assets to enhance the visual and auditory experience. Below is a summary of the resources and their origin.
